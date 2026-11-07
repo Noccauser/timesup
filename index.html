@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<!-- Time's Up Maison · v1.10 -->
+<!-- Time's Up Maison · v1.11 -->
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1B2A8C">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -117,6 +117,26 @@ svg{display:block}
 .confirm-box{width:100%;max-width:480px;background:var(--bg-2);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:12px;box-shadow:inset 0 0 0 2px var(--tomato);text-align:center}
 .intro .confirm-box{margin-bottom:clamp(16px,6vh,64px)}
 .confirm-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.crown-btn{flex:none;width:30px;height:30px;padding:3px;border:0;background:none;cursor:pointer;opacity:.28;filter:grayscale(1)}
+.crown-btn.on{opacity:1;filter:none}
+.crown-btn svg{width:100%;height:100%}
+/* Admin remote (phone) */
+.adm-fab{position:fixed;z-index:70;top:max(10px,env(safe-area-inset-top,0px));right:max(10px,env(safe-area-inset-right,0px));
+  display:inline-flex;align-items:center;gap:6px;background:var(--sun);color:var(--ink);border:0;border-radius:999px;padding:7px 12px 7px 9px;
+  font-family:var(--display);font-size:1rem;box-shadow:0 4px 0 rgba(6,10,50,.4);cursor:pointer}
+.adm-fab svg{width:22px;height:16px}
+.adm-sec{display:flex;flex-direction:column;gap:10px}
+.adm-sec h3{margin:6px 0 0}
+.sheet .adm-players{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.adm-players li{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);border-radius:12px;padding:8px 10px}
+.adm-players li b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.adm-players .st{color:var(--muted);font-weight:700;font-size:.9rem;font-variant-numeric:tabular-nums}
+.adm-players .ready .st{color:var(--mint)}
+.adm-team{border:0;border-radius:999px;background:var(--team);color:var(--ink);font-family:var(--display);font-size:.85rem;padding:5px 10px;cursor:pointer;max-width:42%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.adm-kick{border:0;background:none;color:var(--muted);font-weight:800;cursor:pointer;padding:4px 6px;white-space:nowrap}
+.adm-kick.arm{color:var(--tomato)}
+.adm-scores{display:flex;flex-wrap:wrap;gap:6px}
+.adm-scores span{background:rgba(255,255,255,.08);border-radius:999px;padding:4px 12px;font-weight:700;font-size:.9rem}
 .tdot{width:30px;height:30px;border-radius:50%;background:var(--team);border:3px solid var(--paper);padding:0;cursor:pointer;flex:none}
 .legend-teams{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin-top:4px}
 .legend-teams span{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:.9rem}
@@ -366,7 +386,8 @@ textarea.field{min-height:130px;padding:12px 14px;resize:vertical;line-height:1.
 </style>
 
 <div id="app"></div>
-<div class="ver" id="ver" aria-hidden="true">v1.10</div>
+<div id="adm"></div>
+<div class="ver" id="ver" aria-hidden="true">v1.11</div>
 
 <script>
 (function(){
@@ -606,10 +627,10 @@ function vLobby(){
       <div class="opt"><span>Cartes à choisir</span><div class="seg">${[5,8,10].map(k=>seg("per",k,L.per===k,k)).join("")}</div></div>
       <div class="opt"><span>Cartes perso à écrire</span><div class="seg">${[0,1,2,3].map(k=>seg("customs",k,L.customs===k,k?k:"Aucune")).join("")}</div></div>
       <div class="opt"><span>Cartes affichées sur</span><div class="seg">${seg("giverMode",0,!L.giverPhones,"La tablette")}${seg("giverMode",1,!!L.giverPhones,"Les téléphones")}</div>
-        ${L.giverPhones?`<div class="legend-teams">${lobbyTeams().map(t=>`<span><i style="--team:${t.color}"></i>${esc(t.name)}</span>`).join("")}<span class="hint">Touche la pastille d'un joueur pour changer son équipe</span></div>`:""}</div>
+        ${L.giverPhones?`<div class="legend-teams">${lobbyTeams().map(t=>`<span><i style="--team:${t.color}"></i>${esc(t.name)}</span>`).join("")}<span class="hint">Touche la pastille d'un joueur pour changer son équipe</span>${ps.length&&emptyLobbyTeams().length?`<span class="who warn" style="flex-basis:100%;font-size:.9rem">${emptyLobbyTeams().map(esc).join(", ")} : aucun joueur, ses tours se joueront sur la tablette.</span>`:""}</div>`:""}</div>
       <button class="btn btn-sun wide" data-act="lobbyStart" ${n<5?"disabled":""}>Lancer la partie · ${plural(n,"carte")}</button>
-      <p class="hint">${ready}/${ps.length} prêt${ready>1?"s":""}${n<5?" · il faut au moins 5 cartes":""}</p>
-      <ul class="players">${ps.length?ps.map(([pid,p])=>{const tm=lobbyTeams()[p.team||0]||lobbyTeams()[0];return `<li class="${p.ready?"ready":""}"><span class="pdot ${p.online?"on":""}"></span><b>${esc(p.name||"…")}</b>${L.giverPhones?`<button class="tdot" style="--team:${tm.color}" data-act="pteam" data-pid="${esc(pid)}" aria-label="${esc(p.name)} joue avec ${esc(tm.name)}, toucher pour changer"></button>`:""}<span class="st">${p.ready?"✓":Math.min(p.n,L.per)+"/"+L.per}</span><button class="kick" data-act="kick" data-pid="${esc(pid)}" aria-label="Retirer ${esc(p.name)}">✕</button></li>`}).join(""):`<li class="empty">Personne pour l'instant</li>`}</ul>
+      <p class="hint">${ready}/${ps.length} prêt${ready>1?"s":""}${n<5?" · il faut au moins 5 cartes":""} · touche la couronne d'un joueur pour le faire admin (il pilote la tablette depuis son téléphone)</p>
+      <ul class="players">${ps.length?ps.map(([pid,p])=>{const tm=lobbyTeams()[p.team||0]||lobbyTeams()[0];return `<li class="${p.ready?"ready":""}"><span class="pdot ${p.online?"on":""}"></span><b>${esc(p.name||"…")}</b><button class="crown-btn ${state.admin===pid?"on":""}" data-act="setAdmin" data-pid="${esc(pid)}" aria-label="${state.admin===pid?"Retirer l'admin à ":"Donner l'admin à "}${esc(p.name)}">${ICON.crown}</button>${L.giverPhones?`<button class="tdot" style="--team:${tm.color}" data-act="pteam" data-pid="${esc(pid)}" aria-label="${esc(p.name)} joue avec ${esc(tm.name)}, toucher pour changer"></button>`:""}<span class="st">${p.ready?"✓":Math.min(p.n,L.per)+"/"+L.per}</span><button class="kick" data-act="kick" data-pid="${esc(pid)}" aria-label="Retirer ${esc(p.name)}">✕</button></li>`}).join(""):`<li class="empty">Personne pour l'instant</li>`}</ul>
     </div>
   </div>`;
 }
@@ -867,6 +888,42 @@ function hostConfig(){
   return {t:"config",gid:L.gid||null,per:L.per||10,customs:L.customs!=null?L.customs:2,cats:state.settings.cats,taken:taken.slice(0,120)};
 }
 function tickMsg(pid){
+  const m=baseTick(pid);
+  if(pid&&pid===state.admin)m.adm=adminInfo();
+  return m;
+}
+/* What the admin's phone needs to drive the tablet from afar */
+function adminInfo(){
+  const s=state.screen,t=state.turn,L=state.lobby,g=giverOf();
+  const a={screen:s,round:state.round||1};
+  if(s==="lobby"&&L){
+    a.lobby={per:L.per,customs:L.customs,giverPhones:!!L.giverPhones,n:lobbyDeck().length,teams:lobbyTeams(),
+      players:Object.entries(L.players).map(([pid,p])=>({pid,name:p.name||"…",team:p.team||0,ready:!!p.ready,n:p.n||0,online:!!p.online}))};
+  }
+  if(state.teams){a.team=(state.teams[state.teamIdx]||{}).name;a.scores=state.teams.map((x,i)=>({name:x.name,color:x.color,total:total(i)}))}
+  if((s==="roundIntro"||s==="ready")&&g)a.canTablet=true;
+  if((s==="roundIntro"||s==="ready")&&!g)a.tabletGo=true;
+  if(s==="lobby"&&L&&L.giverPhones)a.lobby.emptyTeams=emptyLobbyTeams();
+  if(s==="turn"&&t){a.paused=!!t.paused;a.onPhone=!!t.onPhone;a.giverOnline=!!(t.giver&&pidOnline(t.giver))}
+  if(s==="turnEnd"&&t)a.rows=t.rows.map(r=>({w:state.deck[r.i].w,ok:r.ok,last:!!r.last}));
+  return a;
+}
+function emptyLobbyTeams(){
+  const n=lobbyTeams().map(()=>0);
+  Object.values(state.lobby.players).forEach(p=>{if(p.name&&n[p.team||0]!=null)n[p.team||0]++});
+  return lobbyTeams().filter((_,i)=>!n[i]).map(t=>t.name);
+}
+const ADMIN_ACTS={lobby:["per","customs","giverMode","pteam","kick","lobbyStart"],roundIntro:["goTablet","go"],ready:["goTablet","go"],
+  turn:["pause","resume","takeoverTablet"],turnEnd:["toggleRow","confirmTurn"],roundEnd:["nextRound"],gameEnd:["rematch","newGame"]};
+function adminAct(pid,d){
+  if(!pid||pid!==state.admin)return;
+  const s=state.screen,a=String(d.a||"");
+  if(a==="quit"){if(s!=="setup"&&s!=="lobby")resetGame();return}
+  if(!(ADMIN_ACTS[s]||[]).includes(a))return;
+  if(a==="takeoverTablet"&&!(state.turn&&state.turn.paused))return;
+  hostAct(a,{dataset:{v:d.v==null?"":String(d.v),pid:cleanStr(d.target,40),i:d.i==null?"":String(d.i)}});
+}
+function baseTick(pid){
   const s=state.screen;
   const phase=(s==="setup"||s==="lobby")?"lobby":(s==="gameEnd"?"end":"game");
   const m={t:"tick",phase,screen:s};
@@ -905,6 +962,7 @@ function onHostData(conn,d){
   const c=net.conns.get(conn.peer);
   if(c&&c.pid!==pid){c.pid=pid;sendTo(conn,tickMsg(pid));rerenderNet()}
   if(d.t==="act"){handleAct(pid,d);return}
+  if(d.t==="admin"){adminAct(pid,d);return}
   if(d.t==="chrono"||!state.lobby||state.screen!=="lobby")return;
   const L=state.lobby;
   if(d.gid&&d.gid!==L.gid)return;
@@ -1004,7 +1062,7 @@ function confirmTurn(){
   window.scrollTo(0,0);render();
 }
 function resetGame(){
-  state={screen:"setup",settings:state.settings,code:state.code,online:state.online};
+  state={screen:"setup",settings:state.settings,code:state.code,online:state.online,admin:state.admin};
   ui={menu:false,rules:false,confirmQuit:false,err:"",shake:false,phones:false};
   render();
 }
@@ -1014,8 +1072,13 @@ document.addEventListener("click",e=>{
   const el=e.target.closest("[data-act]");
   if(!el)return;
   if(e.target.closest("[data-stop]")&&el.matches(".overlay"))return;
-  const act=el.dataset.act,s=state.settings;
+  hostAct(el.dataset.act,el);
+});
+/* Every tablet action, callable from a tap on the tablet or from the admin's phone */
+function hostAct(act,el){
+  const s=state.settings;
   switch(act){
+    case "setAdmin":{const pid=el.dataset.pid;state.admin=state.admin===pid?null:pid;render();break}
     case "rules":ui.rules=true;ui.menu=false;render();break;
     case "closeRules":ui.rules=false;render();break;
     case "menu":if(state.screen==="turn")pauseTurn();ui.menu=true;ui.confirmQuit=false;render();break;
@@ -1056,7 +1119,7 @@ document.addEventListener("click",e=>{
     case "pteam":{const p=state.lobby.players[el.dataset.pid];if(p){p.team=((p.team||0)+1)%lobbyTeams().length;render();broadcastTick()}break}
     case "pause":pauseTurn();render();break;
     case "resume":resumeTurn();render();break;
-    case "toggleRow":{const r=state.turn.rows[+el.dataset.i];r.ok=!r.ok;render();break}
+    case "toggleRow":{const r=state.turn&&state.turn.rows[+el.dataset.i];if(r){r.ok=!r.ok;render()}break}
     case "confirmTurn":confirmTurn();break;
     case "nextRound":
       ui.confirmTablet=false;
@@ -1067,7 +1130,7 @@ document.addEventListener("click",e=>{
       state.teamIdx=Math.floor(Math.random()*state.teams.length);state.screen="roundIntro";render();break;
     case "newGame":resetGame();break;
   }
-});
+}
 document.addEventListener("input",e=>{
   const el=e.target,s=state.settings;
   if(el.dataset&&el.dataset.team!=null){s.teams[+el.dataset.team].name=el.value;save()}
@@ -1225,12 +1288,70 @@ function vGiver(){
     <button class="btn btn-team" style="--team:${esc(t.color)}" data-act="gGo"><small>${esc(t.team)}</small><strong>Go !</strong></button>
   </div></div>`;
 }
+/* Admin remote: a floating button on the admin's phone opens a panel that drives the tablet */
+const pAdm={open:false,arm:null};
+function renderAdmin(){
+  const box=document.getElementById("adm");if(!box)return;
+  const a=pn.tick&&pn.tick.adm;
+  if(!a){box.innerHTML="";pAdm.open=false;return}
+  // Hidden while this phone shows the cards, so it never covers them.
+  const giving=phoneView()==="giver"&&pn.tick.screen==="turn";
+  box.innerHTML=(giving||pAdm.open?"":`<button class="adm-fab" data-act="admOpen">${ICON.crown}Admin</button>`)+(pAdm.open?vAdminPanel(a):"");
+}
+function aBtn(a,label,cls){return `<button class="btn ${cls||"btn-ghost"} wide" data-act="adm" data-a="${a}">${label}</button>`}
+function aConfirm(key,a,label,warn){
+  if(pAdm.arm===key)return `<div class="confirm-box"><p><b>Sûr ?</b> ${warn}</p><div class="confirm-row"><button class="btn btn-tomato small" data-act="adm" data-a="${a}">Oui</button><button class="btn btn-ghost small" data-act="admDisarm">Annuler</button></div></div>`;
+  return `<button class="btn btn-ghost wide" data-act="admArm" data-k="${key}">${label}</button>`;
+}
+function vAdminPanel(a){
+  const s=a.screen;let body="";
+  if(s==="setup"){
+    body=`<p class="lead">La tablette est sur l'accueil. Lance une nouvelle partie depuis la tablette.</p>`;
+  }else if(s==="lobby"&&a.lobby){
+    const L=a.lobby;
+    const segs=(key,opts,cur)=>`<div class="seg">${opts.map(([v,l])=>`<button data-act="adm" data-a="${key}" data-v="${v}" aria-pressed="${String(cur)===String(v)}">${l}</button>`).join("")}</div>`;
+    body=`<div class="adm-sec">
+      <div class="opt"><span>Cartes à choisir</span>${segs("per",[[5,5],[8,8],[10,10]],L.per)}</div>
+      <div class="opt"><span>Cartes perso à écrire</span>${segs("customs",[[0,"Aucune"],[1,1],[2,2],[3,3]],L.customs)}</div>
+      <div class="opt"><span>Cartes affichées sur</span>${segs("giverMode",[[0,"La tablette"],[1,"Les téléphones"]],L.giverPhones?1:0)}</div>
+      <h3>Joueurs</h3>
+      <ul class="adm-players">${L.players.map(p=>{
+        const tm=L.teams[p.team]||L.teams[0],armed=pAdm.arm==="k"+p.pid;
+        return `<li class="${p.ready?"ready":""}"><span class="pdot ${p.online?"on":""}"></span><b>${esc(p.name)}</b>
+          ${L.giverPhones?`<button class="adm-team" style="--team:${esc(tm.color)}" data-act="adm" data-a="pteam" data-pid="${esc(p.pid)}">${esc(tm.name)}</button>`:""}
+          <span class="st">${p.ready?"✓":p.n+"/"+L.per}</span>
+          <button class="adm-kick ${armed?"arm":""}" data-act="${armed?"adm":"admArm"}" data-a="kick" data-pid="${esc(p.pid)}" data-k="k${esc(p.pid)}">${armed?"Retirer ?":"✕"}</button></li>`;
+      }).join("")||`<li>Personne pour l'instant</li>`}</ul>
+      ${L.giverPhones?`<p class="hint">Touche l'équipe d'un joueur pour le changer d'équipe.</p>`:""}
+      ${L.emptyTeams&&L.emptyTeams.length?`<p class="who warn">${L.emptyTeams.map(esc).join(", ")} : aucun joueur, ses tours se joueront sur la tablette.</p>`:""}
+      <button class="btn btn-sun wide" data-act="adm" data-a="lobbyStart" ${L.n<5?"disabled":""}>Lancer la partie · ${plural(L.n,"carte")}</button>
+    </div>`;
+  }else{
+    if(s==="roundIntro"||s==="ready")body+=`<p class="lead">Manche ${a.round} · au tour de <b>${esc(a.team||"")}</b></p>`
+      +(a.canTablet?aConfirm("tab","goTablet","Jouer ce tour sur la tablette","Les cartes vont s'afficher sur la tablette, tout le monde pourra les voir."):"")
+      +(a.tabletGo?aBtn("go","Lancer le chrono (cartes sur la tablette)","btn-sun"):"");
+    if(s==="turn")body+=a.paused
+      ?aBtn("resume","Reprendre","btn-sun")+(a.onPhone&&!a.giverOnline?aConfirm("take","takeoverTablet","Jouer ce tour sur la tablette","Les cartes vont s'afficher sur la tablette, tout le monde pourra les voir."):"")
+      :aBtn("pause","Pause","btn-sun");
+    if(s==="turnEnd"&&a.rows)body+=`<div class="recap">${a.rows.map((r,i)=>`<button class="tr ${r.ok?"is-ok":(r.last?"is-last":"is-no")}" data-act="adm" data-a="toggleRow" data-i="${i}"><span>${esc(r.w)}</span><i>${r.ok||r.last?ICON.ok:ICON.no}</i></button>`).join("")||`<p class="lead">Aucune carte ce tour-ci.</p>`}</div>
+      <p class="hint">Touche une carte pour corriger.</p>`+aBtn("confirmTurn",`Valider · +${plural(a.rows.filter(r=>r.ok).length,"point")}`,"btn-sun");
+    if(s==="roundEnd")body+=aBtn("nextRound",a.round<3?"Manche suivante":"Résultat final","btn-sun");
+    if(s==="gameEnd")body+=aBtn("rematch","Revanche, mêmes cartes","btn-sun")+aBtn("newGame","Nouvelle partie");
+    if(a.scores)body+=`<div class="adm-scores">${a.scores.map(x=>`<span>${esc(x.name)} · ${x.total}</span>`).join("")}</div>`;
+    if(s!=="gameEnd")body+=aConfirm("quit","quit","Abandonner la partie","La partie en cours sera perdue et la tablette revient à l'accueil.");
+  }
+  return `<div class="overlay" data-act="admClose"><div class="sheet" data-stop>
+    <h2>Admin</h2><p class="hint">Tu pilotes la tablette depuis ton téléphone.</p>
+    ${body}
+    <button class="btn btn-ghost" data-act="admClose">Fermer</button>
+  </div></div>`;
+}
 let phoneAudio=false;
 function prender(){
   const v=phoneView();
   app.className=(v==="giver"&&pn.tick&&pn.tick.screen==="turn")?"fill gmode":"scroll";
   pn.lock=false;
-  app.innerHTML=vPhone();pUpdateTimer();
+  app.innerHTML=vPhone();pUpdateTimer();renderAdmin();
 }
 function pLeft(){const t=pn.tick;if(!t||t.left==null)return 0;return Math.max(0,t.running?t.left-(Date.now()-pn.tickAt):t.left)}
 function pUpdateTimer(){
@@ -1264,6 +1385,8 @@ function onPhoneData(d){
     if(pn.wasRunning&&d.screen==="turnEnd"&&d.reason==="time")sfx.buzz();
     pn.wasRunning=d.screen==="turn"&&d.running;
     pn.tick=d;pn.tickAt=Date.now();
+    const admSig=JSON.stringify(d.adm||null);
+    if(admSig!==pn.admSig){pn.admSig=admSig;renderAdmin()}
     const after=phoneView();
     // Re-render only when something visible changed (never on the name / pick / custom screens, which hold inputs).
     const live=["chrono","giver","sent","wait"].includes(after);
@@ -1313,6 +1436,7 @@ function phoneBoot(){
   psave();
   document.addEventListener("click",e=>{
     const el=e.target.closest("[data-act]");if(!el)return;
+    if(e.target.closest("[data-stop]")&&el.matches(".overlay"))return;
     phoneAudio=true;audio();
     switch(el.dataset.act){
       case "pName":{const v=cleanStr((document.getElementById("p-name")||{}).value||"",24);if(!v){document.getElementById("p-name").focus();return}
@@ -1326,6 +1450,16 @@ function phoneBoot(){
       case "pUndo":ph.step="pick";ph.picks.pop();newPair();psave();psend({t:"progress",n:ph.picks.length});prender();break;
       case "pRestart":ph.step="pick";ph.picks=[];newPair();psave();psend({t:"progress",n:0});prender();break;
       case "pSound":sfx.found();prender();break;
+      case "admOpen":pAdm.open=true;pAdm.arm=null;renderAdmin();break;
+      case "admClose":pAdm.open=false;pAdm.arm=null;renderAdmin();break;
+      case "admArm":pAdm.arm=el.dataset.k;renderAdmin();break;
+      case "admDisarm":pAdm.arm=null;renderAdmin();break;
+      case "adm":{
+        const d=el.dataset;
+        // "target" is the player the admin acts on; "pid" stays this phone's own id.
+        psend({t:"admin",a:d.a,v:d.v==null?null:d.v,target:d.pid||"",i:d.i==null?null:d.i});
+        pAdm.arm=null;renderAdmin();break;
+      }
       case "gGo":psend({t:"act",a:"go"});break;
       case "gFound":case "gPass":{
         if(pn.lock||!pn.tick||pn.tick.paused)return;
@@ -1355,7 +1489,7 @@ function start(data){
   if(st.screen==="ready"&&st.round===undefined)st.screen="setup";
   if(st.screen==="turn"&&st.turn)st.turn.paused=true;
   if(st.screen==="lobby"){if(!st.lobby||!st.code)st={screen:"setup",settings:st.settings}}
-  else if(st.screen!=="setup"&&(!st.deck||!st.teams))st={screen:"setup",settings:st.settings,code:st.code,online:st.online};
+  else if(st.screen!=="setup"&&(!st.deck||!st.teams))st={screen:"setup",settings:st.settings,code:st.code,online:st.online,admin:st.admin};
   state=st;
   render();
   if(ONLINE&&(state.screen==="lobby"||state.online))hostStart();
