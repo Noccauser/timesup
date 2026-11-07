@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<!-- Time's Up Maison · v1.11 -->
+<!-- Time's Up Maison · v1.13 -->
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1B2A8C">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -265,7 +265,26 @@ textarea.field{min-height:130px;padding:12px 14px;resize:vertical;line-height:1.
 .meta-line{color:var(--muted);font-weight:700;font-variant-numeric:tabular-nums}
 
 /* Ready: a cartoon "go" disc in the team colour over a slow sunburst */
-.disc-wrap{position:relative;width:min(86vw,54vh,420px);max-width:100%;aspect-ratio:1;display:grid;place-items:center}
+.rg-a,.rg-b{display:flex;flex-direction:column;align-items:center;gap:20px;width:100%;min-width:0}
+/* Landscape tablet: disc on the left, who-plays and live scores on the right, so everything fits without scrolling */
+@media (orientation:landscape) and (min-width:900px){
+  .ready-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:32px;max-width:1100px}
+  .ready-grid .disc-wrap{width:min(40vw,52vh,400px)}
+  .ready-grid .mega{font-size:clamp(2.6rem,6vw,4.4rem)}
+}
+.live-scores{width:100%;max-width:680px;display:flex;flex-wrap:wrap;justify-content:center;gap:14px;padding-top:22px}
+.ls{position:relative;flex:1 1 130px;max-width:210px;min-width:0;background:var(--paper);color:var(--ink);border-radius:18px;border-top:8px solid var(--team);
+  padding:10px 12px 12px;display:flex;flex-direction:column;align-items:center;gap:2px;box-shadow:0 6px 0 rgba(6,10,50,.4);transition:transform .2s}
+.ls.is-lead{transform:translateY(-4px);box-shadow:0 0 0 4px var(--team),0 9px 0 4px rgba(6,10,50,.4)}
+.ls-name{font-weight:800;font-size:.9rem;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ls-total{font-family:var(--display);font-size:clamp(2rem,6vw,2.6rem);line-height:1;font-variant-numeric:tabular-nums}
+.ls-crown{position:absolute;top:-26px;left:50%;transform:translateX(-50%) rotate(-6deg);width:42px;filter:drop-shadow(0 3px 0 rgba(6,10,50,.4))}
+.ls-crown svg{width:100%;height:auto}
+.ls-delta{position:absolute;top:-12px;right:-10px;background:var(--mint);color:#06281A;font-family:var(--display);font-size:1.15rem;padding:3px 10px;border-radius:999px;box-shadow:0 3px 0 rgba(6,10,50,.35);animation:popin .55s cubic-bezier(.2,1.6,.4,1)}
+.ls-delta.zero{background:var(--bg-2);color:var(--muted);box-shadow:inset 0 0 0 1px var(--line)}
+@keyframes popin{from{transform:scale(0) rotate(-20deg)}to{transform:scale(1) rotate(0)}}
+@media (prefers-reduced-motion:reduce){.ls-delta{animation:none}}
+.disc-wrap{position:relative;width:min(86vw,44vh,400px);max-width:100%;aspect-ratio:1;display:grid;place-items:center}
 .disc-wrap::before{
   content:"";position:absolute;inset:0;border-radius:50%;
   background:repeating-conic-gradient(rgba(255,255,255,.13) 0 9deg,transparent 9deg 18deg);
@@ -387,7 +406,7 @@ textarea.field{min-height:130px;padding:12px 14px;resize:vertical;line-height:1.
 
 <div id="app"></div>
 <div id="adm"></div>
-<div class="ver" id="ver" aria-hidden="true">v1.11</div>
+<div class="ver" id="ver" aria-hidden="true">v1.13</div>
 
 <script>
 (function(){
@@ -459,7 +478,9 @@ function parseCustom(txt){
   String(txt||"").split(/\n/).map(x=>x.trim()).filter(Boolean).forEach(w=>{const k=w.toLowerCase();if(!seen.has(k)){seen.add(k);out.push(w.slice(0,60))}});
   return out;
 }
-function save(){store.set(KEY,state)}
+// A tablet tab that handed over to another tab of the same device stops saving, so it can't overwrite the live game.
+let yielded=false;
+function save(){if(!yielded)store.set(KEY,state)}
 function total(i){return state.scores[i].reduce((a,b)=>a+b,0)}
 
 /* ---------- sound ---------- */
@@ -521,7 +542,8 @@ function availText(){
 
 /* ---------- views ---------- */
 function topbar(label){
-  return `<div class="topbar"><span class="t-label">${label}</span><button class="icon-btn" data-act="menu">Menu</button></div>`;
+  const warn=ui.codeChanged&&state.screen!=="lobby"?`<button class="link-btn" style="color:var(--sun);padding:4px" data-act="phones">Nouveau code de salle : les téléphones doivent rescanner</button>`:"";
+  return `<div class="topbar"><span class="t-label">${label}</span>${warn}<button class="icon-btn" data-act="menu">Menu</button></div>`;
 }
 function board(){
   const totals=state.teams.map((_,i)=>total(i)),max=Math.max(...totals);
@@ -579,7 +601,8 @@ function vSetup(){
 
 function netBadge(){
   const st=net.status,n=net.conns.size;
-  if(st==="on")return `<span class="net on"><i></i>Salle ouverte · ${plural(n,"téléphone")} connecté${n>1?"s":""}</span>`;
+  const changed=ui.codeChanged?`<span class="net err" style="display:block;margin-top:6px"><i></i>Nouveau code de salle : rescannez le QR code</span>`:"";
+  if(st==="on")return `<span class="net on"><i></i>Salle ouverte · ${plural(n,"téléphone")} connecté${n>1?"s":""}</span>${changed}`;
   if(st==="error")return `<span class="net err"><i></i>${esc(net.err||"Connexion impossible")}</span>`;
   return `<span class="net"><i></i>Ouverture de la salle…</span>`;
 }
@@ -620,6 +643,7 @@ function vLobby(){
     <div class="lobby-qr">
       <div class="qr">${qrSvg(joinUrl("p"))}</div>
       <p class="code">Code<b>${esc(state.code)}</b></p>
+      <button class="link-btn" data-act="newCode">Les téléphones n'arrivent pas à se connecter ? Nouveau code</button>
       ${netBadge()}
     </div>
     <div class="lobby-side">
@@ -636,8 +660,11 @@ function vLobby(){
 }
 function vPhonesSheet(){
   return `<div class="overlay" data-act="closePhones"><div class="sheet" data-stop style="align-items:center;text-align:center">
+    ${state.lobby?`<h2>Rejoindre la partie</h2>
+    <p>Pour un joueur dont le téléphone a perdu la connexion : il scanne ce code et retrouve sa place et ses cartes.</p>
+    <div class="qr small">${qrSvg(joinUrl("p"))}</div>`:""}
     <h2>Chrono sur téléphone</h2>
-    <p>Scanne ce code avec un téléphone posé au milieu de la table : il affichera le chrono en grand pendant chaque tour.</p>
+    <p>Pour un téléphone posé au milieu de la table : il affichera le chrono en grand pendant chaque tour.</p>
     <div class="qr small">${qrSvg(joinUrl("c"))}</div>
     ${netBadge()}
     <button class="btn btn-sun" data-act="closePhones">Fermer</button>
@@ -680,18 +707,40 @@ function tabletFallback(kind){
 function vReady(){
   const t=state.teams[state.teamIdx],R=ROUNDS[state.round-1],g=giverOf();
   return `${topbar("Manche "+state.round+" · "+R.label)}
-  <div class="center-col">
-    <div class="titles"><h1 class="mega">Manche ${state.round}</h1><p class="mega-sub">${R.title}</p></div>
-    <div class="disc-wrap">
-      ${g?`<div class="disc" style="--team:${t.color}">
-        <small>Au tour de</small><strong>${esc(t.name)}</strong><span class="go-pill">${esc(giverName())}</span>
-      </div>`:`<button class="disc" style="--team:${t.color}" data-act="go" aria-label="Lancer le chrono pour ${esc(t.name)}">
-        <small>Au tour de</small><strong>${esc(t.name)}</strong><span class="go-pill">Go !</span>
-      </button>`}
+  <div class="center-col ready-grid">
+    <div class="rg-a">
+      <div class="titles"><h1 class="mega">Manche ${state.round}</h1><p class="mega-sub">${R.title}</p></div>
+      <div class="disc-wrap">
+        ${g?`<div class="disc" style="--team:${t.color}">
+          <small>Au tour de</small><strong>${esc(t.name)}</strong><span class="go-pill">${esc(giverName())}</span>
+        </div>`:`<button class="disc" style="--team:${t.color}" data-act="go" aria-label="Lancer le chrono pour ${esc(t.name)}">
+          <small>Au tour de</small><strong>${esc(t.name)}</strong><span class="go-pill">Go !</span>
+        </button>`}
+      </div>
     </div>
-    ${g?whoLine()+tabletFallback("go"):""}
-    <p class="meta-line">${plural(state.pile.length,"carte")} restante${state.pile.length>1?"s":""} dans la manche</p>
+    <div class="rg-b">
+      ${g?whoLine()+tabletFallback("go"):""}
+      ${liveScores(teamTotals(),lastTurnInfo())}
+      <p class="meta-line">${plural(state.pile.length,"carte")} restante${state.pile.length>1?"s":""} dans la manche</p>
+    </div>
   </div>`;
+}
+
+/* Live scores between turns: totals, a "+N" on the team that just played, a crown on the leader */
+function teamTotals(){return state.teams.map((x,i)=>({name:x.name,color:x.color,total:total(i)}))}
+function lastTurnInfo(){const l=state.lastTurn;return l&&state.teams[l.team]?{team:state.teams[l.team].name,pts:l.pts}:null}
+function liveScores(items,last){
+  if(!items||!items.length)return "";
+  const max=Math.max(...items.map(x=>x.total)),leaders=items.filter(x=>x.total===max).length;
+  return `<div class="live-scores">${items.map(x=>{
+    const lead=max>0&&x.total===max,delta=last&&last.team===x.name;
+    return `<div class="ls ${lead?"is-lead":""}" style="--team:${esc(x.color)}">
+      ${lead?`<span class="ls-crown" aria-label="${leaders>1?"Égalité":"En tête"}">${ICON.crown}</span>`:""}
+      <span class="ls-name">${esc(x.name)}</span>
+      <span class="ls-total">${x.total}</span>
+      ${delta?`<span class="ls-delta ${last.pts?"":"zero"}">+${last.pts}</span>`:""}
+    </div>`;
+  }).join("")}</div>`;
 }
 
 /* Shared screen while a phone holds the cards: no word on the tablet, just the pressure */
@@ -793,7 +842,7 @@ function vMenu(){
     <h2>Menu</h2>
     <button class="btn btn-sun" data-act="closeMenu">Reprendre</button>
     <button class="btn btn-ghost" data-act="rules">Les règles</button>
-    ${ONLINE?`<button class="btn btn-ghost" data-act="phones">Afficher le chrono sur un téléphone</button>`:""}
+    ${ONLINE?`<button class="btn btn-ghost" data-act="phones">Téléphones (QR codes)</button>`:""}
     <button class="btn btn-ghost" data-act="sound">Son : ${state.settings.sound?"activé":"coupé"}</button>
     <button class="btn btn-tomato" data-act="quit">${ui.confirmQuit?"Sûr ? Abandonner la partie":"Abandonner la partie"}</button>
   </div></div>`;
@@ -816,6 +865,7 @@ function vRules(){
 
 /* ---------- render ---------- */
 function render(){
+  if(yielded)return;
   const s=state.screen;
   app.className=s==="turn"?"fill":(s==="lobby"?"scroll lobbymode":"scroll");
   const v={setup:vSetup,lobby:vLobby,roundIntro:vRoundIntro,ready:vReady,turn:vTurn,turnEnd:vTurnEnd,roundEnd:vRoundEnd,gameEnd:vGameEnd}[s]||vSetup;
@@ -827,8 +877,30 @@ function render(){
 
 /* ---------- host networking ---------- */
 const net={peer:null,conns:new Map(),status:"off",err:"",retries:0,reopening:false};
+/* Only one tablet tab per device may hold the room: when a new tab opens the game, older tabs step aside.
+   Otherwise two tabs fight over the same room code and phones end up connected to a hidden tab. */
+const TAB_ID=Math.random().toString(36).slice(2);
+let hostBC=null;
+function claimHost(){
+  try{
+    if(!hostBC){
+      hostBC=new BroadcastChannel("tu-maison-host");
+      hostBC.onmessage=e=>{const d=e.data||{};if(d.t==="claim"&&d.id!==TAB_ID&&!yielded)yieldHost()};
+    }
+    hostBC.postMessage({t:"claim",id:TAB_ID});
+  }catch(e){}
+}
+function yieldHost(){
+  yielded=true;
+  try{net.peer&&net.peer.destroy()}catch(e){}
+  net.peer=null;net.conns.clear();
+  app.className="scroll";
+  app.innerHTML=`<div class="center-col"><h1 class="mega" style="font-size:clamp(2rem,6vw,3rem)">Le jeu est ouvert dans un autre onglet</h1>
+    <p class="round-rules">Cet onglet s'est mis en veille pour que les téléphones restent connectés au bon endroit.</p>
+    <button class="btn btn-sun" data-act="reclaim">Utiliser plutôt cet onglet</button></div>`;
+}
 async function hostStart(){
-  if(!ONLINE||ROLE!=="host")return;
+  if(!ONLINE||ROLE!=="host"||yielded)return;
   if(!state.code){state.code=makeCode();save()}
   state.online=true;
   loadScript(LIBS.qr).then(rerenderNet).catch(()=>{});
@@ -840,11 +912,17 @@ async function hostStart(){
 function reopenHost(delay){
   if(net.reopening)return;net.reopening=true;
   try{net.peer&&net.peer.destroy()}catch(e){}
-  net.peer=null;
+  net.peer=null;net.conns.clear();
   setTimeout(()=>{net.reopening=false;openHostPeer()},delay);
 }
+// A fresh room code (the old one is stuck on the connection server). Phones must scan the new QR code.
+function newRoomCode(){
+  state.code=makeCode();net.retries=0;ui.codeChanged=true;
+  if(state.lobby)Object.values(state.lobby.players).forEach(p=>p.online=false);
+  save();reopenHost(300);render();
+}
 function openHostPeer(){
-  if(net.peer||!window.Peer)return;
+  if(net.peer||!window.Peer||yielded)return;
   const peer=new Peer(PEER_PREFIX+state.code,{debug:0});
   net.peer=peer;
   peer.on("open",()=>{net.status="on";net.retries=0;rerenderNet()});
@@ -865,11 +943,15 @@ function openHostPeer(){
   peer.on("disconnected",()=>{try{peer.reconnect()}catch(e){}});
   peer.on("error",e=>{
     if(e.type==="peer-unavailable")return;
-    if(e.type==="unavailable-id"&&net.retries<10){net.retries++;net.status="connecting";reopenHost(3000);return}
-    net.status="error";
-    net.err=e.type==="unavailable-id"?"Ce code de salle est déjà pris. Recharge la page.":"Connexion perdue, nouvel essai…";
+    // Code still held by an old session: retry a few times (it frees up after a reload), then switch to a new code.
+    if(e.type==="unavailable-id"){
+      net.retries++;net.status="connecting";
+      if(net.retries<=4)reopenHost(3000);else newRoomCode();
+      return;
+    }
+    net.status="error";net.err="Connexion perdue, nouvel essai…";
     rerenderNet();
-    if(e.type!=="unavailable-id")reopenHost(4000);
+    reopenHost(4000);
   });
 }
 // Re-render the tablet when phones come and go, on the screens that show who is connected.
@@ -940,6 +1022,7 @@ function baseTick(pid){
   Object.assign(m,{team:team.name,color:team.color,round:state.round,roundTitle:ROUNDS[(state.round||1)-1].title,
     running,left,dur:(state.duration||30)*1000,reason:t?t.reason:null,
     cardsLeft:(state.pile?state.pile.length:0)+(t?t.rows.filter(r=>!r.ok).length:0),
+    last:lastTurnInfo(),
     giverName:giver&&state.roster[giver]?state.roster[giver].name:"",
     scores:state.teams.map((x,i)=>({name:x.name,color:x.color,total:total(i)}))});
   // Only the player holding the cards ever receives the word.
@@ -987,6 +1070,7 @@ function updateTimer(){
   box.classList.toggle("danger",sec<=5);
 }
 setInterval(()=>{
+  if(yielded||!state)return;
   if(state.screen!=="turn"||!state.turn||state.turn.paused||ui.menu||ui.rules)return;
   const left=state.turn.endsAt-Date.now();
   state.turn.left=Math.max(0,left);
@@ -1017,7 +1101,7 @@ function startGame(deckOverride){
   if(phoneTurns)Object.entries(L.players).forEach(([pid,p])=>{if(!p.name)return;roster[pid]={name:p.name};(teams[p.team||0]||teams[0]).players.push(pid)});
   Object.assign(state,{screen:"roundIntro",teams,deck,pile:shuffle(deck.map((_,i)=>i)),round:1,
     teamIdx:Math.floor(Math.random()*teams.length),scores:teams.map(()=>[0,0,0]),turn:null,duration:s.duration,
-    phoneTurns,roster,giverIdx:teams.map(()=>0)});
+    phoneTurns,roster,giverIdx:teams.map(()=>0),lastTurn:null});
   window.scrollTo(0,0);render();
 }
 function startTurn(forceTablet){
@@ -1054,6 +1138,7 @@ function confirmTurn(){
     else if(!state.pile.includes(r.i))state.pile.push(r.i);
   });
   state.scores[state.teamIdx][state.round-1]+=pts;
+  state.lastTurn={team:state.teamIdx,pts};
   if(state.phoneTurns)state.giverIdx[state.teamIdx]=(state.giverIdx[state.teamIdx]||0)+1;
   state.pile=shuffle(state.pile);
   state.teamIdx=(state.teamIdx+1)%state.teams.length;
@@ -1078,6 +1163,8 @@ document.addEventListener("click",e=>{
 function hostAct(act,el){
   const s=state.settings;
   switch(act){
+    case "reclaim":location.reload();break;
+    case "newCode":newRoomCode();break;
     case "setAdmin":{const pid=el.dataset.pid;state.admin=state.admin===pid?null:pid;render();break}
     case "rules":ui.rules=true;ui.menu=false;render();break;
     case "closeRules":ui.rules=false;render();break;
@@ -1126,6 +1213,7 @@ function hostAct(act,el){
       if(state.round>=3){state.screen="gameEnd";render();break}
       state.round++;state.pile=shuffle(state.deck.map((_,i)=>i));state.screen="roundIntro";window.scrollTo(0,0);render();break;
     case "rematch":
+      state.lastTurn=null;
       state.round=1;state.scores=state.teams.map(()=>[0,0,0]);state.pile=shuffle(state.deck.map((_,i)=>i));
       state.teamIdx=Math.floor(Math.random()*state.teams.length);state.screen="roundIntro";render();break;
     case "newGame":resetGame();break;
@@ -1149,7 +1237,8 @@ document.addEventListener("visibilitychange",()=>{
 /* ---------- phone app (?p=CODE to pick words, ?c=CODE for the table chrono) ---------- */
 const PKEY="tu-phone-"+ROOM;
 let ph, pn={peer:null,conn:null,status:"connecting",config:null,tick:null,tickAt:0,wasRunning:false};
-function psave(){store.set(PKEY,ph)}
+// Also kept under a code-independent key: if the tablet changes room code, the phone keeps its identity and its cards.
+function psave(){store.set(PKEY,ph);if(ROLE==="player")store.set("tu-phone-last",ph)}
 function ppool(){
   const cats=(pn.config&&Array.isArray(pn.config.cats)&&pn.config.cats.length)?pn.config.cats:["celeb","persos","trucs","lieux"];
   const taken=new Set(((pn.config&&pn.config.taken)||[]).concat(ph.picks).map(w=>String(w).toLowerCase()));
@@ -1184,7 +1273,7 @@ function phoneView(){
 function pStatus(){
   const st=pn.status;
   if(st==="on")return `<span class="net on"><i></i>Connecté à la partie ${esc(ROOM)}</span>`;
-  if(st==="nohost")return `<span class="net"><i></i>On cherche la tablette ${esc(ROOM)}…</span>`;
+  if(st==="nohost")return `<span class="net"><i></i>On cherche la tablette ${esc(ROOM)}…</span>${(pn.miss||0)>=4?`<p class="hint" style="margin-top:6px">La tablette ne répond pas. Vérifie qu'elle affiche bien le jeu. Si le code affiché sur la tablette n'est plus ${esc(ROOM)}, rescanne le QR code.</p>`:""}`;
   if(st==="error")return `<span class="net err"><i></i>Connexion perdue, nouvel essai…</span>`;
   return `<span class="net"><i></i>Connexion…</span>`;
 }
@@ -1260,7 +1349,7 @@ function vChrono(){
     inner=`<p class="rt">Manche ${t.round} · ${esc(t.roundTitle)}</p><p class="lead">Au tour de</p>
       <span class="pill" style="--team:${esc(t.color)};font-size:2rem">${esc(t.team)}</span>
       ${t.giverName?`<p class="lead">${esc(t.giverName)} fait deviner</p>`:""}
-      <div class="mini-list">${(t.scores||[]).map(x=>`<span>${esc(x.name)} · ${x.total}</span>`).join("")}</div>`;
+      ${liveScores(t.scores,t.last)}`;
   }
   return `<div class="phone">${pStatus()}<div class="chrono" id="chrono">${inner}</div>
     ${phoneAudio?"":`<button class="btn btn-ghost small" data-act="pSound">Activer le son du buzzer</button>`}</div>`;
@@ -1390,7 +1479,7 @@ function onPhoneData(d){
     const after=phoneView();
     // Re-render only when something visible changed (never on the name / pick / custom screens, which hold inputs).
     const live=["chrono","giver","sent","wait"].includes(after);
-    const sig=after+"|"+(live?JSON.stringify([d.screen,d.card,d.seq,d.rows,d.paused,d.cardsLeft,d.running,d.team,d.giverName,d.myTeam&&d.myTeam.name,d.reason,d.phase]):"");
+    const sig=after+"|"+(live?JSON.stringify([d.screen,d.card,d.seq,d.rows,d.paused,d.cardsLeft,d.running,d.team,d.giverName,d.myTeam&&d.myTeam.name,d.reason,d.phase,d.scores,d.last]):"");
     if(sig!==pn.sig||before!==after){pn.sig=sig;prender()}
     else pUpdateTimer();
   }
@@ -1404,7 +1493,7 @@ function openPhonePeer(){
   peer.on("open",connectHost);
   peer.on("disconnected",()=>{try{peer.reconnect()}catch(e){}});
   peer.on("error",e=>{
-    if(e.type==="peer-unavailable"){pn.status="nohost";prender();setTimeout(connectHost,3000);return}
+    if(e.type==="peer-unavailable"){pn.status="nohost";pn.miss=(pn.miss||0)+1;prender();setTimeout(connectHost,3000);return}
     if(["network","server-error","socket-error","socket-closed"].includes(e.type)){
       pn.status="error";prender();try{peer.destroy()}catch(_){}
       pn.peer=null;setTimeout(openPhonePeer,4000);
@@ -1416,7 +1505,7 @@ function connectHost(){
   if(pn.conn&&pn.conn.open)return;
   const conn=pn.peer.connect(PEER_PREFIX+ROOM,{reliable:true});pn.conn=conn;
   conn.on("open",()=>{
-    pn.status="on";
+    pn.status="on";pn.miss=0;
     // Always say hello first so the tablet knows which player this phone is (needed for phone turns).
     if(ROLE!=="chrono")psend({t:"hello"});
     if(ROLE==="chrono")psend({t:"chrono"});
@@ -1430,7 +1519,7 @@ function connectHost(){
 }
 function phoneBoot(){
   state={settings:{sound:true}};
-  ph=store.get(PKEY)||{};
+  ph=store.get(PKEY)||(ROLE==="player"?store.get("tu-phone-last"):null)||{};
   ph=Object.assign({pid:"p"+Math.random().toString(36).slice(2,10),name:"",step:"name",picks:[],custom:["",""],pair:null},ph);
   if(!Array.isArray(ph.custom))ph.custom=["",""];
   psave();
@@ -1491,6 +1580,7 @@ function start(data){
   if(st.screen==="lobby"){if(!st.lobby||!st.code)st={screen:"setup",settings:st.settings}}
   else if(st.screen!=="setup"&&(!st.deck||!st.teams))st={screen:"setup",settings:st.settings,code:st.code,online:st.online,admin:st.admin};
   state=st;
+  if(ONLINE)claimHost();
   render();
   if(ONLINE&&(state.screen==="lobby"||state.online))hostStart();
 }
