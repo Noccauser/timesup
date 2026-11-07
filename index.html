@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<!-- Time's Up Maison · v1.9 -->
+<!-- Time's Up Maison · v1.10 -->
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1B2A8C">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -107,6 +107,16 @@ svg{display:block}
 .players li.empty{color:var(--muted);justify-content:center}
 .pdot{width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,.25);flex:none}
 .pdot.on{background:var(--mint)}
+.btn-team.as-label{cursor:default}
+.btn-team.as-label:active{transform:none;box-shadow:0 0 0 5px var(--paper),0 10px 0 5px rgba(6,10,50,.45)}
+.intro .btn-team.as-label{margin-bottom:8px}
+.disc:not(button){cursor:default}
+.who.warn{color:var(--sun)}
+.link-btn{background:none;border:0;color:var(--muted);text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:10px;font-weight:600;font-size:.95rem}
+.intro .link-btn{margin-bottom:clamp(16px,6vh,64px)}
+.confirm-box{width:100%;max-width:480px;background:var(--bg-2);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:12px;box-shadow:inset 0 0 0 2px var(--tomato);text-align:center}
+.intro .confirm-box{margin-bottom:clamp(16px,6vh,64px)}
+.confirm-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 .tdot{width:30px;height:30px;border-radius:50%;background:var(--team);border:3px solid var(--paper);padding:0;cursor:pointer;flex:none}
 .legend-teams{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin-top:4px}
 .legend-teams span{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:.9rem}
@@ -167,6 +177,25 @@ svg{display:block}
 .chrono.danger .bar i{background:var(--tomato)}
 .chrono .big-msg{font-family:var(--display);font-size:clamp(2.4rem,11vw,3.6rem);line-height:1.05;color:var(--paper)}
 .chrono .big-msg.bad{color:var(--tomato)}
+/* Phone that holds the cards */
+#app.fill.gmode{min-height:0}
+.gturn{flex:1;min-height:0;width:100%;max-width:520px;margin:0 auto;position:relative;
+  display:grid;grid-template-rows:auto auto minmax(80px,1fr) auto;gap:clamp(18px,3vh,28px);align-items:center;justify-items:center}
+.g-hud{width:100%;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.g-team{background:var(--team);color:var(--ink);font-family:var(--display);font-size:.85rem;padding:3px 10px;border-radius:999px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%}
+.g-round{font-family:var(--display);font-size:.95rem;color:var(--muted)}
+.g-timer{width:100%;display:flex;flex-direction:column;align-items:center;gap:8px}
+.gturn #c-num{font-family:var(--display);font-size:clamp(3rem,min(20vw,10vh),6rem);line-height:.9;color:var(--sun);text-shadow:0 5px 0 rgba(6,10,50,.5);font-variant-numeric:tabular-nums}
+.gturn #c-num small{font-size:.5em;vertical-align:.7em}
+.gturn .bar{width:100%;height:10px;margin:0}
+.gturn.danger #c-num{color:var(--tomato)}
+.gturn.danger .bar i{background:var(--tomato)}
+.g-card{width:100%;height:100%;min-height:80px;max-height:300px;padding:20px}
+.g-card .word{font-size:clamp(1.8rem,min(9vw,6vh),3.4rem)}
+.g-card .badge{min-width:42px;height:42px;font-size:1.2rem;right:-8px;bottom:-8px}
+.g-btns{display:flex;flex-direction:column;align-items:center;gap:clamp(12px,2.2vh,20px);padding-bottom:10px}
+.gturn .ok{width:clamp(92px,min(46vw,20vh),210px);box-shadow:0 0 0 5px var(--paper),0 8px 0 5px rgba(6,10,50,.35)}
+.gturn .no{width:clamp(58px,min(19vw,9vh),96px);margin-top:0;box-shadow:0 0 0 4px var(--paper),0 6px 0 4px rgba(6,10,50,.35)}
 .giver-turn #c-num{font-family:var(--display);font-size:clamp(4rem,min(22vw,12vh),7rem);line-height:.9;color:var(--sun);text-shadow:0 6px 0 rgba(6,10,50,.5);font-variant-numeric:tabular-nums}
 .giver-turn #c-num small{font-size:.5em;vertical-align:.7em}
 .giver-turn .danger #c-num{color:var(--tomato)}
@@ -337,7 +366,7 @@ textarea.field{min-height:130px;padding:12px 14px;resize:vertical;line-height:1.
 </style>
 
 <div id="app"></div>
-<div class="ver" id="ver" aria-hidden="true">v1.9</div>
+<div class="ver" id="ver" aria-hidden="true">v1.10</div>
 
 <script>
 (function(){
@@ -602,22 +631,44 @@ function vRoundIntro(){
       <div class="titles"><h1 class="mega">Manche ${r}</h1><p class="mega-sub">${R.title}</p></div>
       <p class="round-rules">${R.rules}</p>
     </div>
-    ${giverOf()?`<p class="who"><b>${esc(giverName())}</b> lance le tour depuis son téléphone</p>`:""}
-    <button class="btn btn-team" style="--team:${t.color}" data-act="go"><small>Ça commence avec</small><strong>${esc(t.name)}</strong></button>
+    ${giverOf()?`<div class="btn btn-team as-label" style="--team:${t.color}"><small>Ça commence avec</small><strong>${esc(t.name)}</strong></div>
+      ${whoLine()}${tabletFallback("go")}`
+    :`<button class="btn btn-team" style="--team:${t.color}" data-act="go"><small>Ça commence avec</small><strong>${esc(t.name)}</strong></button>`}
+  </div>`;
+}
+
+/* Phone turns: the tablet never starts the chrono itself; only the player's phone does.
+   The tablet only offers an explicit, confirmed fallback that shows the cards on the tablet. */
+function whoLine(){
+  const g=giverOf();if(!g)return "";
+  return pidOnline(g)
+    ?`<p class="who">C'est <b>${esc(giverName())}</b> qui fait deviner. Go sur son téléphone !</p>`
+    :`<p class="who warn">Le téléphone de <b>${esc(giverName())}</b> est déconnecté. Il suffit de rouvrir la page sur son téléphone.</p>`;
+}
+function tabletFallback(kind){
+  if(!ui.confirmTablet)return `<button class="link-btn" data-act="askTablet">Jouer ce tour sur la tablette</button>`;
+  return `<div class="confirm-box">
+    <p><b>Sûr ?</b> Les cartes vont s'afficher sur la tablette, tout le monde pourra les voir.</p>
+    <div class="confirm-row">
+      <button class="btn btn-tomato small" data-act="${kind==="go"?"goTablet":"takeoverTablet"}">Oui, jouer sur la tablette</button>
+      <button class="btn btn-ghost small" data-act="cancelTablet">Annuler</button>
+    </div>
   </div>`;
 }
 
 function vReady(){
-  const t=state.teams[state.teamIdx],R=ROUNDS[state.round-1];
+  const t=state.teams[state.teamIdx],R=ROUNDS[state.round-1],g=giverOf();
   return `${topbar("Manche "+state.round+" · "+R.label)}
   <div class="center-col">
     <div class="titles"><h1 class="mega">Manche ${state.round}</h1><p class="mega-sub">${R.title}</p></div>
     <div class="disc-wrap">
-      <button class="disc" style="--team:${t.color}" data-act="go" aria-label="Lancer le chrono pour ${esc(t.name)}">
+      ${g?`<div class="disc" style="--team:${t.color}">
+        <small>Au tour de</small><strong>${esc(t.name)}</strong><span class="go-pill">${esc(giverName())}</span>
+      </div>`:`<button class="disc" style="--team:${t.color}" data-act="go" aria-label="Lancer le chrono pour ${esc(t.name)}">
         <small>Au tour de</small><strong>${esc(t.name)}</strong><span class="go-pill">Go !</span>
-      </button>
+      </button>`}
     </div>
-    ${giverOf()?`<p class="who">C'est <b>${esc(giverName())}</b> qui fait deviner${pidOnline(giverOf())?" : Go sur son téléphone !":". Son téléphone est déconnecté, le tour se jouera sur la tablette."}</p>`:""}
+    ${g?whoLine()+tabletFallback("go"):""}
     <p class="meta-line">${plural(state.pile.length,"carte")} restante${state.pile.length>1?"s":""} dans la manche</p>
   </div>`;
 }
@@ -638,7 +689,10 @@ function vTurnShared(){
       <div class="timer" id="timer"><span id="t-num">${Math.ceil(t.left/1000)}<small>″</small></span><div class="bar"><i id="t-bar"></i></div></div>
       <div class="shared-meta"><span>${plural(found,"trouvée")}</span><span>${plural(left,"carte")} restante${left>1?"s":""}</span></div>
     </div>
-    ${t.paused?`<div class="pause-layer"><h2>Pause</h2><p class="hint">Le chrono est arrêté.</p><button class="btn btn-sun" data-act="resume">Reprendre</button><button class="btn btn-ghost small" data-act="menu">Menu</button></div>`:""}
+    ${t.paused?(pidOnline(t.giver)
+      ?`<div class="pause-layer"><h2>Pause</h2><p class="hint">Le chrono est arrêté.</p><button class="btn btn-sun" data-act="resume">Reprendre</button><button class="btn btn-ghost small" data-act="menu">Menu</button></div>`
+      :`<div class="pause-layer"><h2>Pause</h2><p class="who warn">Le téléphone de <b>${esc(name)}</b> s'est déconnecté. Le chrono est arrêté. Rouvre la page sur son téléphone, puis appuie sur Reprendre.</p>${tabletFallback("takeover")}<button class="btn btn-ghost small" data-act="menu">Menu</button></div>`)
+    :""}
   </div>`;
 }
 
@@ -780,9 +834,9 @@ function openHostPeer(){
       const c=net.conns.get(conn.peer);
       if(c&&c.pid&&state.lobby&&state.lobby.players[c.pid])state.lobby.players[c.pid].online=false;
       net.conns.delete(conn.peer);
-      // The phone holding the cards dropped: the tablet takes over the turn so nobody is stuck.
+      // The phone holding the cards dropped: stop the chrono and let the tablet decide (wait for it, or play on the tablet).
       const t=state.turn;
-      if(c&&state.screen==="turn"&&t&&t.onPhone&&t.giver===c.pid&&!pidOnline(c.pid)){t.onPhone=false;render();return}
+      if(c&&state.screen==="turn"&&t&&t.onPhone&&t.giver===c.pid&&!pidOnline(c.pid)){pauseTurn();render();return}
       rerenderNet();
     });
     conn.on("error",()=>{});
@@ -797,7 +851,12 @@ function openHostPeer(){
     if(e.type!=="unavailable-id")reopenHost(4000);
   });
 }
-function rerenderNet(){if(ROLE==="host"&&(state.screen==="lobby"||ui.phones))render()}
+// Re-render the tablet when phones come and go, on the screens that show who is connected.
+function rerenderNet(){
+  if(ROLE!=="host")return;
+  const s=state.screen;
+  if(s==="lobby"||ui.phones||((s==="ready"||s==="roundIntro")&&state.phoneTurns)||(s==="turn"&&state.turn&&state.turn.paused&&state.turn.onPhone))render();
+}
 function sendTo(conn,msg){try{if(conn&&conn.open)conn.send(msg)}catch(e){}}
 function broadcast(msg){if(!net.peer||ROLE!=="host")return;net.conns.forEach(c=>sendTo(c.conn,msg))}
 function broadcastTick(){if(!net.peer||ROLE!=="host")return;net.conns.forEach(c=>sendTo(c.conn,tickMsg(c.pid)))}
@@ -830,10 +889,6 @@ function tickMsg(pid){
   if(pid&&giver===pid){
     m.me=true;
     if(s==="turn"&&t&&t.onPhone&&t.giver===pid&&state.pile.length){m.card=state.deck[state.pile[0]].w;m.seq=t.seq;m.paused=t.paused}
-    if(s==="turnEnd"&&t&&t.onPhone&&t.giver===pid){
-      m.rows=t.rows.map(r=>({w:state.deck[r.i].w,ok:r.ok,last:!!r.last}));
-      m.title=t.reason==="time"?"Temps écoulé !":(t.rows.some(r=>!r.ok)?"Plus de cartes pour ce tour !":"Plus de cartes !");
-    }
   }
   return m;
 }
@@ -842,18 +897,18 @@ function handleAct(pid,d){
   const s=state.screen,t=state.turn;
   if(d.a==="go"&&(s==="roundIntro"||s==="ready"))startTurn();
   else if((d.a==="found"||d.a==="pass")&&s==="turn"&&t&&t.onPhone&&!t.paused&&d.seq===t.seq)(d.a==="found"?doFound:doPass)();
-  else if(d.a==="toggle"&&s==="turnEnd"&&t&&t.rows[+d.i]){t.rows[+d.i].ok=!t.rows[+d.i].ok;render()}
-  else if(d.a==="confirm"&&s==="turnEnd")confirmTurn();
+  // Corrections and validation at the end of a turn happen on the tablet only.
 }
 function onHostData(conn,d){
   if(!d||typeof d!=="object")return;
   const pid=cleanStr(d.pid,40);if(!pid)return;
   const c=net.conns.get(conn.peer);
-  if(c&&c.pid!==pid){c.pid=pid;sendTo(conn,tickMsg(pid));if(state.screen==="ready"||state.screen==="roundIntro")render()}
+  if(c&&c.pid!==pid){c.pid=pid;sendTo(conn,tickMsg(pid));rerenderNet()}
   if(d.t==="act"){handleAct(pid,d);return}
   if(d.t==="chrono"||!state.lobby||state.screen!=="lobby")return;
   const L=state.lobby;
   if(d.gid&&d.gid!==L.gid)return;
+  if(d.t==="hello"&&!L.players[pid])return;
   const p=L.players[pid]||(L.players[pid]={name:"",picks:[],custom:[],ready:false,n:0,team:emptiestTeam()});
   p.online=true;
   const name=cleanStr(d.name,24);if(name)p.name=name;
@@ -907,10 +962,10 @@ function startGame(deckOverride){
     phoneTurns,roster,giverIdx:teams.map(()=>0)});
   window.scrollTo(0,0);render();
 }
-function startTurn(){
+function startTurn(forceTablet){
   const ms=state.duration*1000,g=giverOf();
-  state.turn={rows:[],left:ms,endsAt:Date.now()+ms,paused:false,reason:null,seq:0,giver:g,onPhone:!!(g&&pidOnline(g))};
-  state.screen="turn";lastSec=null;
+  state.turn={rows:[],left:ms,endsAt:Date.now()+ms,paused:false,reason:null,seq:0,giver:g,onPhone:!forceTablet&&!!(g&&pidOnline(g))};
+  state.screen="turn";lastSec=null;ui.confirmTablet=false;
   sfx.go();wake();render();
 }
 function doFound(){
@@ -929,13 +984,13 @@ function setRow(idx,ok,last){
   if(r){r.ok=ok;r.last=!!last}else rows.push({i:idx,ok,last:!!last});
 }
 function endTurn(reason){
-  const t=state.turn;t.reason=reason;t.left=0;t.paused=false;
+  const t=state.turn;t.reason=reason;t.left=0;t.paused=false;ui.confirmTablet=false;
   if(reason==="time"&&state.pile.length)setRow(state.pile[0],false,true);
   if(reason==="time")sfx.buzz();
   state.screen="turnEnd";render();
 }
 function confirmTurn(){
-  const t=state.turn;let pts=0;
+  const t=state.turn;let pts=0;ui.confirmTablet=false;
   t.rows.forEach(r=>{
     if(r.ok){state.pile=state.pile.filter(x=>x!==r.i);pts++}
     else if(!state.pile.includes(r.i))state.pile.push(r.i);
@@ -990,9 +1045,13 @@ document.addEventListener("click",e=>{
     case "lobbyStart":{const d=lobbyDeck();if(d.length>=5)startGame(shuffle(d));break}
     case "phones":ui.menu=false;ui.phones=true;hostStart();render();break;
     case "closePhones":ui.phones=false;render();break;
-    case "go":startTurn();break;
+    case "go":if(!giverOf())startTurn();break;
     case "found":doFound();break;
     case "pass":doPass();break;
+    case "askTablet":ui.confirmTablet=true;render();break;
+    case "cancelTablet":ui.confirmTablet=false;render();break;
+    case "goTablet":if(state.screen==="ready"||state.screen==="roundIntro")startTurn(true);break;
+    case "takeoverTablet":if(state.turn){state.turn.onPhone=false;ui.confirmTablet=false;render()}break;
     case "giverMode":state.lobby.giverPhones=s.lobbyGiverPhones=el.dataset.v==="1";render();broadcastTick();break;
     case "pteam":{const p=state.lobby.players[el.dataset.pid];if(p){p.team=((p.team||0)+1)%lobbyTeams().length;render();broadcastTick()}break}
     case "pause":pauseTurn();render();break;
@@ -1000,6 +1059,7 @@ document.addEventListener("click",e=>{
     case "toggleRow":{const r=state.turn.rows[+el.dataset.i];r.ok=!r.ok;render();break}
     case "confirmTurn":confirmTurn();break;
     case "nextRound":
+      ui.confirmTablet=false;
       if(state.round>=3){state.screen="gameEnd";render();break}
       state.round++;state.pile=shuffle(state.deck.map((_,i)=>i));state.screen="roundIntro";window.scrollTo(0,0);render();break;
     case "rematch":
@@ -1052,7 +1112,6 @@ function phoneView(){
   if(t&&t.phase==="game"&&t.me){
     if(t.screen==="roundIntro"||t.screen==="ready")return "giver";
     if(t.screen==="turn"&&t.card)return "giver";
-    if(t.screen==="turnEnd"&&t.rows)return "giver";
   }
   if(t&&t.phase!=="lobby")return "chrono";
   if(t&&t.screen==="setup")return "wait";
@@ -1133,10 +1192,11 @@ function vChrono(){
       <div class="bar"><i id="c-bar"></i></div>
       <p class="left">${plural(t.cardsLeft,"carte")} restante${t.cardsLeft>1?"s":""}${t.running?"":" · pause"}</p>`;
   }else if(t.screen==="turnEnd"){
-    inner=`<span class="pill" style="--team:${esc(t.color)}">${esc(t.team)}</span><p class="big-msg ${t.reason==="time"?"bad":""}">${t.reason==="time"?"Temps écoulé !":"Plus de cartes !"}</p>`;
+    inner=`<span class="pill" style="--team:${esc(t.color)}">${esc(t.team)}</span><p class="big-msg ${t.reason==="time"?"bad":""}">${t.reason==="time"?"Temps écoulé !":"Plus de cartes !"}</p><p class="lead">On vérifie les cartes sur la tablette.</p>`;
   }else{
     inner=`<p class="rt">Manche ${t.round} · ${esc(t.roundTitle)}</p><p class="lead">Au tour de</p>
       <span class="pill" style="--team:${esc(t.color)};font-size:2rem">${esc(t.team)}</span>
+      ${t.giverName?`<p class="lead">${esc(t.giverName)} fait deviner</p>`:""}
       <div class="mini-list">${(t.scores||[]).map(x=>`<span>${esc(x.name)} · ${x.total}</span>`).join("")}</div>`;
   }
   return `<div class="phone">${pStatus()}<div class="chrono" id="chrono">${inner}</div>
@@ -1146,30 +1206,17 @@ function vChrono(){
 function vGiver(){
   const t=pn.tick;
   if(t.screen==="turn"){
-    return `<div class="play giver-turn">
-      <header class="hud"><span class="pill" style="--team:${esc(t.color)}">${esc(t.team)}</span><span class="hud-mid">${esc(t.roundTitle)}</span></header>
-      <div class="stage">
-        <div class="stage-a" id="chrono">
-          <div class="timer"><span id="c-num">${Math.ceil((t.left||0)/1000)}<small>″</small></span><div class="bar"><i id="c-bar"></i></div></div>
-          <div class="card enter"><div class="word">${esc(t.card)}</div><span class="badge">${t.cardsLeft}</span></div>
-        </div>
-        <div class="stage-b">
-          <button class="round-btn ok" data-act="gFound" aria-label="Trouvé">${ICON.ok}</button>
-          <button class="round-btn no" data-act="gPass" aria-label="Passer">${ICON.no}</button>
-        </div>
+    // Rows: small header, timer, the card (takes the free height), then ✓ and ✗. Sized on the screen height so nothing overlaps.
+    return `<div class="gturn" id="chrono">
+      <header class="g-hud"><span class="g-team" style="--team:${esc(t.color)}">${esc(t.team)}</span><span class="g-round">${esc(t.roundTitle)}</span></header>
+      <div class="g-timer"><span id="c-num">${Math.ceil((t.left||0)/1000)}<small>″</small></span><div class="bar"><i id="c-bar"></i></div></div>
+      <div class="card g-card enter"><div class="word">${esc(t.card)}</div><span class="badge" aria-label="${t.cardsLeft} cartes restantes">${t.cardsLeft}</span></div>
+      <div class="g-btns">
+        <button class="round-btn ok" data-act="gFound" aria-label="Trouvé">${ICON.ok}</button>
+        <button class="round-btn no" data-act="gPass" aria-label="Passer">${ICON.no}</button>
       </div>
-      ${t.paused?`<div class="pause-layer"><h2>Pause</h2><p class="hint">La tablette a mis le jeu en pause.</p></div>`:""}
+      ${t.paused?`<div class="pause-layer"><h2>Pause</h2><p class="hint">Le chrono est arrêté sur la tablette.</p></div>`:""}
     </div>`;
-  }
-  if(t.screen==="turnEnd"){
-    const pts=t.rows.filter(r=>r.ok).length;
-    return `<div class="phone"><div class="phone-main">
-      <h1 class="${t.reason==="time"?"":""}">${esc(t.title||"Fin du tour")}</h1>
-      <p class="recap-head"><b>+${plural(pts,"point")}</b> pour ${esc(t.team)}</p>
-      <div class="recap">${t.rows.map((r,i)=>`<button class="tr ${r.ok?"is-ok":(r.last?"is-last":"is-no")}" data-act="gToggle" data-i="${i}"><span>${esc(r.w)}</span><i>${r.ok||r.last?ICON.ok:ICON.no}</i></button>`).join("")||`<p class="lead">Aucune carte ce tour-ci.</p>`}</div>
-      <p class="hint">Touche une carte pour corriger.</p>
-      <button class="btn btn-sun wide" data-act="gConfirm">Valider</button>
-    </div></div>`;
   }
   return `<div class="phone">${pStatus()}<div class="phone-main">
     <p class="rt" style="font-family:var(--display);font-size:1.5rem;color:var(--sun)">Manche ${t.round} · ${esc(t.roundTitle)}</p>
@@ -1181,7 +1228,7 @@ function vGiver(){
 let phoneAudio=false;
 function prender(){
   const v=phoneView();
-  app.className=(v==="giver"&&pn.tick&&pn.tick.screen==="turn")?"fill":"scroll";
+  app.className=(v==="giver"&&pn.tick&&pn.tick.screen==="turn")?"fill gmode":"scroll";
   pn.lock=false;
   app.innerHTML=vPhone();pUpdateTimer();
 }
@@ -1247,6 +1294,8 @@ function connectHost(){
   const conn=pn.peer.connect(PEER_PREFIX+ROOM,{reliable:true});pn.conn=conn;
   conn.on("open",()=>{
     pn.status="on";
+    // Always say hello first so the tablet knows which player this phone is (needed for phone turns).
+    if(ROLE!=="chrono")psend({t:"hello"});
     if(ROLE==="chrono")psend({t:"chrono"});
     else if(ph.step==="sent")sendWords();
     else if(ph.step!=="name")psend({t:"progress",n:ph.picks.length});
@@ -1286,8 +1335,6 @@ function phoneBoot(){
         if(a==="found")sfx.found();else sfx.pass();
         break;
       }
-      case "gToggle":psend({t:"act",a:"toggle",i:+el.dataset.i});break;
-      case "gConfirm":psend({t:"act",a:"confirm"});break;
     }
   });
   document.addEventListener("input",e=>{const m=/^p-c(\d)$/.exec(e.target.id);if(m){ph.custom[+m[1]]=e.target.value;psave()}else if(e.target.id==="p-name"){ph.name=e.target.value;psave()}});
