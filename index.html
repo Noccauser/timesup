@@ -1,4 +1,7 @@
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1B2A8C">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>Time's Up Maison</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -36,6 +39,9 @@ body{
   padding-right:max(16px,env(safe-area-inset-right,0px));
   padding-block:14px;
 }
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+.standalone #app{padding-top:max(14px,env(safe-area-inset-top,0px));padding-bottom:max(14px,env(safe-area-inset-bottom,0px))}
+.waiting-dot{width:72px;height:72px;margin:0 auto;border-radius:50%;border:8px solid rgba(255,255,255,.15);border-top-color:var(--sun);animation:spin 1s linear infinite}
 #app.scroll{min-height:100%}
 #app.fill{height:100%;min-height:520px}
 h1,h2,h3{margin:0;font-weight:400;text-wrap:balance}
@@ -308,6 +314,7 @@ const store={
 // Phones only work when the page is hosted on its own site (GitHub Pages): inside the Claude viewer, direct connections are blocked.
 const INVIEWER=!!(window.claude&&window.claude.use);
 const ONLINE=!INVIEWER&&/^https?:$/.test(location.protocol);
+if(!INVIEWER)document.documentElement.classList.add("standalone");
 const QS=new URLSearchParams(location.search);
 const ROLE=QS.get("p")?"player":(QS.get("c")?"chrono":"host");
 const ROOM=String(QS.get("p")||QS.get("c")||"").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,6);
@@ -496,7 +503,8 @@ function qrSvg(url){
 function lobbyDeck(){
   const seen=new Set(),out=[];
   const add=(w,c)=>{const k=w.toLowerCase();if(!seen.has(k)){seen.add(k);out.push({w,c})}};
-  Object.values(state.lobby.players).forEach(p=>{if(p.ready)p.picks.concat(p.custom).forEach(w=>add(w,"Joueurs"))});
+  const nc=state.lobby.customs!=null?state.lobby.customs:2;
+  Object.values(state.lobby.players).forEach(p=>{if(p.ready)p.picks.concat(p.custom.slice(0,nc)).forEach(w=>add(w,"Joueurs"))});
   parseCustom(state.settings.custom).forEach(w=>add(w,"Perso"));
   return out;
 }
@@ -512,8 +520,9 @@ function vLobby(){
     </div>
     <div class="lobby-side">
       <h1>Scannez pour choisir vos mots</h1>
-      <p class="round-rules">Chacun choisit ${L.per} cartes et en écrit 2 sur son téléphone.</p>
-      <div class="opt"><span>Cartes par joueur</span><div class="seg">${[5,8,10].map(k=>seg("per",k,L.per===k,k)).join("")}</div></div>
+      <p class="round-rules">Chacun choisit ${L.per} cartes${L.customs?` et en écrit ${L.customs}`:""} sur son téléphone.</p>
+      <div class="opt"><span>Cartes à choisir</span><div class="seg">${[5,8,10].map(k=>seg("per",k,L.per===k,k)).join("")}</div></div>
+      <div class="opt"><span>Cartes perso à écrire</span><div class="seg">${[0,1,2,3].map(k=>seg("customs",k,L.customs===k,k?k:"Aucune")).join("")}</div></div>
       <ul class="players">${ps.length?ps.map(([pid,p])=>`<li class="${p.ready?"ready":""}"><span class="pdot ${p.online?"on":""}"></span><b>${esc(p.name||"…")}</b><span class="st">${p.ready?"Prêt ✓":"choisit… "+Math.min(p.n,L.per)+"/"+L.per}</span><button class="kick" data-act="kick" data-pid="${esc(pid)}" aria-label="Retirer ${esc(p.name)}">✕</button></li>`).join(""):`<li class="empty">Personne pour l'instant</li>`}</ul>
       <button class="btn btn-sun wide" data-act="lobbyStart" ${n<5?"disabled":""}>Lancer la partie · ${plural(n,"carte")}</button>
       <p class="hint">${ready}/${ps.length} prêt${ready>1?"s":""}${n<5?" · il faut au moins 5 cartes":""}</p>
@@ -712,7 +721,8 @@ function broadcast(msg){if(!net.peer||ROLE!=="host")return;net.conns.forEach(c=>
 function hostConfig(){
   const taken=[];
   if(state.lobby)Object.values(state.lobby.players).forEach(p=>taken.push(...p.picks));
-  return {t:"config",per:state.lobby?state.lobby.per:10,cats:state.settings.cats,taken:taken.slice(0,120)};
+  const L=state.lobby||{};
+  return {t:"config",gid:L.gid||null,per:L.per||10,customs:L.customs!=null?L.customs:2,cats:state.settings.cats,taken:taken.slice(0,120)};
 }
 function tickMsg(){
   const s=state.screen;
@@ -733,6 +743,7 @@ function onHostData(conn,d){
   const c=net.conns.get(conn.peer);if(c)c.pid=pid;
   if(d.t==="chrono"||!state.lobby||state.screen!=="lobby")return;
   const L=state.lobby;
+  if(d.gid&&d.gid!==L.gid)return;
   const p=L.players[pid]||(L.players[pid]={name:"",picks:[],custom:[],ready:false,n:0});
   p.online=true;
   const name=cleanStr(d.name,24);if(name)p.name=name;
@@ -768,7 +779,8 @@ function resumeTurn(){const t=state.turn;if(!t)return;t.paused=false;t.endsAt=Da
 function startGame(deckOverride){
   const s=state.settings;
   if(!deckOverride&&ONLINE&&s.phones){
-    state.lobby={per:(state.lobby&&state.lobby.per)||10,players:{}};
+    const prev=state.lobby||{};
+    state.lobby={per:s.lobbyPer||prev.per||10,customs:s.lobbyCustoms!=null?s.lobbyCustoms:(prev.customs!=null?prev.customs:2),players:{},gid:makeCode()+Date.now().toString(36)};
     state.screen="lobby";ui.err="";hostStart();window.scrollTo(0,0);render();broadcast(hostConfig());return;
   }
   const teams=s.teams.map((t,i)=>({name:(t.name||"").trim()||("Équipe "+(i+1)),color:t.color}));
@@ -843,7 +855,8 @@ document.addEventListener("click",e=>{
     case "dur":s.duration=+el.dataset.v;render();break;
     case "cat":{const k=el.dataset.k;s.cats=s.cats.includes(k)?s.cats.filter(x=>x!==k):s.cats.concat(k);render();break}
     case "start":startGame();break;
-    case "per":state.lobby.per=+el.dataset.v;render();broadcast(hostConfig());break;
+    case "per":state.lobby.per=s.lobbyPer=+el.dataset.v;render();broadcast(hostConfig());break;
+    case "customs":state.lobby.customs=s.lobbyCustoms=+el.dataset.v;render();broadcast(hostConfig());break;
     case "kick":delete state.lobby.players[el.dataset.pid];render();broadcast(hostConfig());break;
     case "lobbyBack":state.screen="setup";render();break;
     case "lobbyStart":{const d=lobbyDeck();if(d.length>=5)startGame(shuffle(d));break}
@@ -904,12 +917,22 @@ function ppool(){
 }
 function newPair(){const p=shuffle(ppool());ph.pair=[p[0],p[1]];psave()}
 function perPlayer(){return (pn.config&&+pn.config.per)||10}
-function psend(m){try{if(pn.conn&&pn.conn.open)pn.conn.send(Object.assign({pid:ph.pid,name:ph.name},m))}catch(e){}}
-function sendWords(){psend({t:"words",picks:ph.picks,custom:ph.custom.filter(Boolean)})}
+function nCustoms(){const c=pn.config&&pn.config.customs;return c==null?2:Math.max(0,Math.min(3,+c||0))}
+function psend(m){try{if(pn.conn&&pn.conn.open)pn.conn.send(Object.assign({pid:ph.pid,name:ph.name,gid:ph.gid||null},m))}catch(e){}}
+function resetPhone(){ph.step="name";ph.picks=[];ph.custom=[];ph.pair=null;psave()}
+function finishPicks(){
+  ph.picks=ph.picks.slice(0,perPlayer());
+  if(nCustoms()>0)ph.step="custom";
+  else{ph.custom=[];ph.step="sent";sendWords()}
+}
+function sendWords(){psend({t:"words",picks:ph.picks,custom:ph.custom.filter(Boolean).slice(0,nCustoms())})}
 
 function phoneView(){
   if(ROLE==="chrono")return "chrono";
-  if(ph.step==="sent"&&pn.tick&&pn.tick.phase!=="lobby")return "chrono";
+  const t=pn.tick;
+  if(t&&t.phase!=="lobby")return "chrono";
+  if(t&&t.screen==="setup")return "wait";
+  if(!pn.config||!pn.config.gid)return pn.status==="on"?"wait":ph.step;
   return ph.step;
 }
 function pStatus(){
@@ -923,7 +946,13 @@ function vPhone(){
   const v=phoneView();
   if(v==="chrono")return vChrono();
   let body="";
-  if(v==="name"){
+  if(v==="wait"){
+    body=`<div class="phone-main">
+      <div class="waiting-dot" aria-hidden="true"></div>
+      <h1>En attente d'une partie</h1>
+      <p class="lead">Dès que la tablette ouvre une nouvelle partie, tu pourras choisir tes cartes ici. Pas besoin de rescanner.</p>
+    </div>`;
+  }else if(v==="name"){
     body=`<div class="phone-main">
       <h1>Time's Up maison</h1>
       <p class="lead">Ton prénom, pour que la tablette sache qui est prêt.</p>
@@ -943,11 +972,11 @@ function vPhone(){
       <button class="btn btn-ghost small" data-act="reroll">Je connais aucune des deux</button>
     </div>`;
   }else if(v==="custom"){
+    const nc=nCustoms();
     body=`<div class="phone-main">
-      <h1>Écris 2 cartes à toi</h1>
+      <h1>Écris ${nc>1?nc+" cartes":"1 carte"} à toi</h1>
       <p class="lead">Un pote, une private joke, ce que tu veux. Les autres devront le faire deviner.</p>
-      <input id="p-c0" class="field" maxlength="60" placeholder="Carte perso 1" value="${esc(ph.custom[0]||"")}" autocomplete="off">
-      <input id="p-c1" class="field" maxlength="60" placeholder="Carte perso 2" value="${esc(ph.custom[1]||"")}" autocomplete="off">
+      ${Array.from({length:nc},(_,i)=>`<input id="p-c${i}" class="field" maxlength="60" placeholder="Carte perso ${i+1}" value="${esc(ph.custom[i]||"")}" autocomplete="off">`).join("")}
       <button class="btn btn-sun wide" data-act="pSend">Envoyer mes cartes</button>
       <button class="btn btn-ghost small" data-act="pUndo">← Revenir aux choix</button>
     </div>`;
@@ -1000,8 +1029,18 @@ function pUpdateTimer(){
 function onPhoneData(d){
   if(!d||typeof d!=="object")return;
   if(d.t==="config"){
+    const before=phoneView();
     pn.config=d;
-    if(ph.step==="pick"&&ph.picks.length>=perPlayer()){ph.picks=ph.picks.slice(0,perPlayer());ph.step="custom";psave();prender();return}
+    // A new game on the tablet: everything chosen for the previous one is wiped.
+    if(d.gid&&ph.gid!==d.gid){
+      const had=!!ph.gid;ph.gid=d.gid;
+      if(had||ph.step!=="name")resetPhone();
+      psave();prender();
+      if(ph.name)psend({t:"progress",n:0});
+      return;
+    }
+    if(ph.step==="pick"&&ph.picks.length>=perPlayer()){finishPicks();psave();prender();return}
+    if(before!==phoneView()){prender();return}
     if(ph.pair&&((d.taken||[]).map(w=>String(w).toLowerCase()).some(w=>w===String(ph.pair[0]).toLowerCase()||w===String(ph.pair[1]).toLowerCase()))){newPair();if(phoneView()==="pick")prender()}
     if(phoneView()==="pick")prender();
     return;
@@ -1062,17 +1101,17 @@ function phoneBoot(){
       case "pName":{const v=cleanStr((document.getElementById("p-name")||{}).value||"",24);if(!v){document.getElementById("p-name").focus();return}
         ph.name=v;ph.step="pick";newPair();psave();psend({t:"progress",n:ph.picks.length});prender();break}
       case "pick":{const w=ph.pair[+el.dataset.i];if(w&&!ph.picks.includes(w))ph.picks.push(w);
-        if(ph.picks.length>=perPlayer()){ph.picks=ph.picks.slice(0,perPlayer());ph.step="custom"}else newPair();
+        if(ph.picks.length>=perPlayer())finishPicks();else newPair();
         psave();psend({t:"progress",n:ph.picks.length});sfx.found();prender();break}
       case "reroll":newPair();prender();break;
-      case "pSend":ph.custom=[cleanStr(document.getElementById("p-c0").value,60),cleanStr(document.getElementById("p-c1").value,60)];
+      case "pSend":ph.custom=Array.from({length:nCustoms()},(_,i)=>{const f=document.getElementById("p-c"+i);return f?cleanStr(f.value,60):""});
         ph.step="sent";psave();sendWords();prender();break;
       case "pUndo":ph.step="pick";ph.picks.pop();newPair();psave();psend({t:"progress",n:ph.picks.length});prender();break;
       case "pRestart":ph.step="pick";ph.picks=[];newPair();psave();psend({t:"progress",n:0});prender();break;
       case "pSound":sfx.found();prender();break;
     }
   });
-  document.addEventListener("input",e=>{if(e.target.id==="p-c0"||e.target.id==="p-c1"){ph.custom[e.target.id==="p-c0"?0:1]=e.target.value;psave()}else if(e.target.id==="p-name"){ph.name=e.target.value;psave()}});
+  document.addEventListener("input",e=>{const m=/^p-c(\d)$/.exec(e.target.id);if(m){ph.custom[+m[1]]=e.target.value;psave()}else if(e.target.id==="p-name"){ph.name=e.target.value;psave()}});
   setInterval(()=>{if(phoneView()==="chrono")pUpdateTimer()},100);
   async function lock(){try{if(navigator.wakeLock)await navigator.wakeLock.request("screen")}catch(e){}}
   lock();document.addEventListener("visibilitychange",()=>{if(!document.hidden)lock()});
