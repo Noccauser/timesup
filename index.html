@@ -102,6 +102,16 @@ svg{display:block}
 .players li.empty{color:var(--muted);justify-content:center}
 .pdot{width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,.25);flex:none}
 .pdot.on{background:var(--mint)}
+.tchip{border:0;border-radius:999px;background:var(--team);color:var(--ink);font-family:var(--display);font-size:1rem;padding:6px 12px;cursor:pointer;white-space:nowrap;max-width:45%;overflow:hidden;text-overflow:ellipsis}
+.shared-stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;text-align:center}
+.shared-stage #t-num{font-size:clamp(7rem,min(34vw,32vh),20rem)}
+.shared-stage .bar{height:18px;width:min(100%,820px)}
+.giver-line{font-family:var(--display);font-size:clamp(1.6rem,5vw,2.6rem);color:var(--paper)}
+.giver-line b{font-weight:400;color:var(--team)}
+.shared-meta{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.shared-meta span{background:var(--bg-2);border-radius:999px;padding:8px 18px;font-weight:800;font-variant-numeric:tabular-nums;box-shadow:inset 0 0 0 1px var(--line);font-size:1.1rem}
+.who{color:var(--muted);font-weight:700;font-size:1.1rem}
+.who b{color:var(--paper)}
 .kick{background:none;border:0;color:var(--muted);font-size:1.1rem;cursor:pointer;padding:4px 6px}
 .net{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:.9rem;color:var(--muted)}
 .net i{width:10px;height:10px;border-radius:50%;background:var(--sun)}
@@ -134,6 +144,10 @@ svg{display:block}
 .chrono.danger .bar i{background:var(--tomato)}
 .chrono .big-msg{font-family:var(--display);font-size:clamp(2.4rem,11vw,3.6rem);line-height:1.05;color:var(--paper)}
 .chrono .big-msg.bad{color:var(--tomato)}
+.giver-turn #c-num{font-family:var(--display);font-size:clamp(4rem,min(22vw,12vh),7rem);line-height:.9;color:var(--sun);text-shadow:0 6px 0 rgba(6,10,50,.5);font-variant-numeric:tabular-nums}
+.giver-turn #c-num small{font-size:.5em;vertical-align:.7em}
+.giver-turn .danger #c-num{color:var(--tomato)}
+.giver-turn .danger .bar i{background:var(--tomato)}
 .chrono .left{font-weight:800;color:var(--muted);font-variant-numeric:tabular-nums}
 .play-ico{flex:none;width:44px;height:44px;border-radius:50%;background:var(--ink);color:var(--paper);display:grid;place-items:center}
 .play-ico svg{width:20px;height:20px;margin-left:3px}
@@ -508,6 +522,22 @@ function lobbyDeck(){
   parseCustom(state.settings.custom).forEach(w=>add(w,"Perso"));
   return out;
 }
+function lobbyTeams(){return state.settings.teams.map((t,i)=>({name:(t.name||"").trim()||("Équipe "+(i+1)),color:t.color}))}
+function emptiestTeam(){
+  const n=lobbyTeams().map(()=>0);
+  Object.values(state.lobby.players).forEach(p=>{if(n[p.team||0]!=null)n[p.team||0]++});
+  return n.indexOf(Math.min(...n));
+}
+/* Phone turns: who holds the cards this turn (a player pid), or null when the tablet shows them */
+function giverOf(){
+  if(!state.phoneTurns||!state.teams)return null;
+  const list=state.teams[state.teamIdx].players||[];
+  if(!list.length)return null;
+  return list[(state.giverIdx[state.teamIdx]||0)%list.length];
+}
+function giverName(){const g=giverOf();return g&&state.roster[g]?state.roster[g].name:""}
+function pidOnline(pid){let on=false;net.conns.forEach(c=>{if(c.pid===pid&&c.conn.open)on=true});return on}
+
 function vLobby(){
   const L=state.lobby,ps=Object.entries(L.players);
   const ready=ps.filter(([,p])=>p.ready).length,n=lobbyDeck().length;
@@ -523,7 +553,9 @@ function vLobby(){
       <p class="round-rules">Chacun choisit ${L.per} cartes${L.customs?` et en écrit ${L.customs}`:""} sur son téléphone.</p>
       <div class="opt"><span>Cartes à choisir</span><div class="seg">${[5,8,10].map(k=>seg("per",k,L.per===k,k)).join("")}</div></div>
       <div class="opt"><span>Cartes perso à écrire</span><div class="seg">${[0,1,2,3].map(k=>seg("customs",k,L.customs===k,k?k:"Aucune")).join("")}</div></div>
-      <ul class="players">${ps.length?ps.map(([pid,p])=>`<li class="${p.ready?"ready":""}"><span class="pdot ${p.online?"on":""}"></span><b>${esc(p.name||"…")}</b><span class="st">${p.ready?"Prêt ✓":"choisit… "+Math.min(p.n,L.per)+"/"+L.per}</span><button class="kick" data-act="kick" data-pid="${esc(pid)}" aria-label="Retirer ${esc(p.name)}">✕</button></li>`).join(""):`<li class="empty">Personne pour l'instant</li>`}</ul>
+      <div class="opt"><span>Qui affiche les cartes à faire deviner ?</span><div class="seg">${seg("giverMode",0,!L.giverPhones,"La tablette")}${seg("giverMode",1,!!L.giverPhones,"Les téléphones")}</div>
+        ${L.giverPhones?`<p class="hint">Chacun son tour, le téléphone de celui qui fait deviner affiche les cartes. La tablette reste au milieu avec le chrono et les scores. Touche une équipe pour changer quelqu'un d'équipe.</p>`:""}</div>
+      <ul class="players">${ps.length?ps.map(([pid,p])=>{const tm=lobbyTeams()[p.team||0]||lobbyTeams()[0];return `<li class="${p.ready?"ready":""}"><span class="pdot ${p.online?"on":""}"></span><b>${esc(p.name||"…")}</b>${L.giverPhones?`<button class="tchip" style="--team:${tm.color}" data-act="pteam" data-pid="${esc(pid)}">${esc(tm.name)}</button>`:""}<span class="st">${p.ready?"Prêt ✓":"choisit… "+Math.min(p.n,L.per)+"/"+L.per}</span><button class="kick" data-act="kick" data-pid="${esc(pid)}" aria-label="Retirer ${esc(p.name)}">✕</button></li>`}).join(""):`<li class="empty">Personne pour l'instant</li>`}</ul>
       <button class="btn btn-sun wide" data-act="lobbyStart" ${n<5?"disabled":""}>Lancer la partie · ${plural(n,"carte")}</button>
       <p class="hint">${ready}/${ps.length} prêt${ready>1?"s":""}${n<5?" · il faut au moins 5 cartes":""}</p>
     </div>
@@ -547,6 +579,7 @@ function vRoundIntro(){
       <div class="titles"><h1 class="mega">Manche ${r}</h1><p class="mega-sub">${R.title}</p></div>
       <p class="round-rules">${R.rules}</p>
     </div>
+    ${giverOf()?`<p class="who"><b>${esc(giverName())}</b> lance le tour depuis son téléphone</p>`:""}
     <button class="btn btn-team" style="--team:${t.color}" data-act="go"><small>Ça commence avec</small><strong>${esc(t.name)}</strong></button>
   </div>`;
 }
@@ -561,12 +594,34 @@ function vReady(){
         <small>Au tour de</small><strong>${esc(t.name)}</strong><span class="go-pill">Go !</span>
       </button>
     </div>
+    ${giverOf()?`<p class="who">C'est <b>${esc(giverName())}</b> qui fait deviner${pidOnline(giverOf())?" : Go sur son téléphone !":". Son téléphone est déconnecté, le tour se jouera sur la tablette."}</p>`:""}
     <p class="meta-line">${plural(state.pile.length,"carte")} restante${state.pile.length>1?"s":""} dans la manche</p>
+  </div>`;
+}
+
+/* Shared screen while a phone holds the cards: no word on the tablet, just the pressure */
+function vTurnShared(){
+  const t=state.turn,team=state.teams[state.teamIdx],R=ROUNDS[state.round-1];
+  const left=state.pile.length+t.rows.filter(r=>!r.ok).length,found=t.rows.filter(r=>r.ok).length;
+  const name=state.roster[t.giver]?state.roster[t.giver].name:"";
+  return `<div class="play">
+    <header class="hud">
+      <span class="pill" style="--team:${team.color}">${esc(team.name)}</span>
+      <span class="hud-mid">${R.title}</span>
+      <button class="icon-btn" data-act="pause">Pause</button>
+    </header>
+    <div class="shared-stage">
+      <p class="giver-line" style="--team:${team.color}"><b>${esc(name)}</b> fait deviner</p>
+      <div class="timer" id="timer"><span id="t-num">${Math.ceil(t.left/1000)}<small>″</small></span><div class="bar"><i id="t-bar"></i></div></div>
+      <div class="shared-meta"><span>${plural(found,"trouvée")}</span><span>${plural(left,"carte")} restante${left>1?"s":""}</span></div>
+    </div>
+    ${t.paused?`<div class="pause-layer"><h2>Pause</h2><p class="hint">Le chrono est arrêté.</p><button class="btn btn-sun" data-act="resume">Reprendre</button><button class="btn btn-ghost small" data-act="menu">Menu</button></div>`:""}
   </div>`;
 }
 
 function vTurn(){
   const t=state.turn,team=state.teams[state.teamIdx],R=ROUNDS[state.round-1];
+  if(t.onPhone)return vTurnShared();
   const card=state.deck[state.pile[0]];
   const left=state.pile.length+t.rows.filter(r=>!r.ok).length;
   const anim=ui.shake?"shake":"enter";ui.shake=false;
@@ -669,7 +724,7 @@ function render(){
   app.innerHTML=v()+(ui.menu?vMenu():"")+(ui.rules?vRules():"")+(ui.phones?vPhonesSheet():"");
   updateTimer();
   save();
-  broadcast(tickMsg());
+  broadcastTick();
 }
 
 /* ---------- host networking ---------- */
@@ -701,7 +756,11 @@ function openHostPeer(){
     conn.on("close",()=>{
       const c=net.conns.get(conn.peer);
       if(c&&c.pid&&state.lobby&&state.lobby.players[c.pid])state.lobby.players[c.pid].online=false;
-      net.conns.delete(conn.peer);rerenderNet();
+      net.conns.delete(conn.peer);
+      // The phone holding the cards dropped: the tablet takes over the turn so nobody is stuck.
+      const t=state.turn;
+      if(c&&state.screen==="turn"&&t&&t.onPhone&&t.giver===c.pid&&!pidOnline(c.pid)){t.onPhone=false;render();return}
+      rerenderNet();
     });
     conn.on("error",()=>{});
   });
@@ -718,38 +777,66 @@ function openHostPeer(){
 function rerenderNet(){if(ROLE==="host"&&(state.screen==="lobby"||ui.phones))render()}
 function sendTo(conn,msg){try{if(conn&&conn.open)conn.send(msg)}catch(e){}}
 function broadcast(msg){if(!net.peer||ROLE!=="host")return;net.conns.forEach(c=>sendTo(c.conn,msg))}
+function broadcastTick(){if(!net.peer||ROLE!=="host")return;net.conns.forEach(c=>sendTo(c.conn,tickMsg(c.pid)))}
 function hostConfig(){
   const taken=[];
   if(state.lobby)Object.values(state.lobby.players).forEach(p=>taken.push(...p.picks));
   const L=state.lobby||{};
   return {t:"config",gid:L.gid||null,per:L.per||10,customs:L.customs!=null?L.customs:2,cats:state.settings.cats,taken:taken.slice(0,120)};
 }
-function tickMsg(){
+function tickMsg(pid){
   const s=state.screen;
   const phase=(s==="setup"||s==="lobby")?"lobby":(s==="gameEnd"?"end":"game");
   const m={t:"tick",phase,screen:s};
-  if(!state.teams||phase==="lobby")return m;
+  if(phase==="lobby"){
+    const L=state.lobby,p=L&&pid&&L.players[pid];
+    if(s==="lobby"&&L&&L.giverPhones&&p){const tm=lobbyTeams()[p.team||0];if(tm)m.myTeam=tm}
+    return m;
+  }
+  if(!state.teams)return m;
   const team=state.teams[state.teamIdx]||state.teams[0],t=state.turn;
   let left=null,running=false;
   if(s==="turn"&&t){running=!t.paused;left=t.paused?t.left:Math.max(0,t.endsAt-Date.now())}
-  return Object.assign(m,{team:team.name,color:team.color,round:state.round,roundTitle:ROUNDS[(state.round||1)-1].title,
+  const giver=giverOf();
+  Object.assign(m,{team:team.name,color:team.color,round:state.round,roundTitle:ROUNDS[(state.round||1)-1].title,
     running,left,dur:(state.duration||30)*1000,reason:t?t.reason:null,
     cardsLeft:(state.pile?state.pile.length:0)+(t?t.rows.filter(r=>!r.ok).length:0),
+    giverName:giver&&state.roster[giver]?state.roster[giver].name:"",
     scores:state.teams.map((x,i)=>({name:x.name,color:x.color,total:total(i)}))});
+  // Only the player holding the cards ever receives the word.
+  if(pid&&giver===pid){
+    m.me=true;
+    if(s==="turn"&&t&&t.onPhone&&t.giver===pid&&state.pile.length){m.card=state.deck[state.pile[0]].w;m.seq=t.seq;m.paused=t.paused}
+    if(s==="turnEnd"&&t&&t.onPhone&&t.giver===pid){
+      m.rows=t.rows.map(r=>({w:state.deck[r.i].w,ok:r.ok,last:!!r.last}));
+      m.title=t.reason==="time"?"Temps écoulé !":(t.rows.some(r=>!r.ok)?"Plus de cartes pour ce tour !":"Plus de cartes !");
+    }
+  }
+  return m;
+}
+function handleAct(pid,d){
+  const g=giverOf();if(!g||pid!==g)return;
+  const s=state.screen,t=state.turn;
+  if(d.a==="go"&&(s==="roundIntro"||s==="ready"))startTurn();
+  else if((d.a==="found"||d.a==="pass")&&s==="turn"&&t&&t.onPhone&&!t.paused&&d.seq===t.seq)(d.a==="found"?doFound:doPass)();
+  else if(d.a==="toggle"&&s==="turnEnd"&&t&&t.rows[+d.i]){t.rows[+d.i].ok=!t.rows[+d.i].ok;render()}
+  else if(d.a==="confirm"&&s==="turnEnd")confirmTurn();
 }
 function onHostData(conn,d){
   if(!d||typeof d!=="object")return;
   const pid=cleanStr(d.pid,40);if(!pid)return;
-  const c=net.conns.get(conn.peer);if(c)c.pid=pid;
+  const c=net.conns.get(conn.peer);
+  if(c&&c.pid!==pid){c.pid=pid;sendTo(conn,tickMsg(pid));if(state.screen==="ready"||state.screen==="roundIntro")render()}
+  if(d.t==="act"){handleAct(pid,d);return}
   if(d.t==="chrono"||!state.lobby||state.screen!=="lobby")return;
   const L=state.lobby;
   if(d.gid&&d.gid!==L.gid)return;
-  const p=L.players[pid]||(L.players[pid]={name:"",picks:[],custom:[],ready:false,n:0});
+  const p=L.players[pid]||(L.players[pid]={name:"",picks:[],custom:[],ready:false,n:0,team:emptiestTeam()});
   p.online=true;
   const name=cleanStr(d.name,24);if(name)p.name=name;
   if(d.t==="progress"){p.n=Math.max(0,Math.min(+d.n||0,99));p.ready=false}
   if(d.t==="words"){p.picks=cleanArr(d.picks,12,60);p.custom=cleanArr(d.custom,3,60);p.n=p.picks.length;p.ready=true}
-  save();broadcast(hostConfig());rerenderNet();
+  save();broadcast(hostConfig());rerenderNet();broadcastTick();
 }
 
 /* ---------- timer ---------- */
@@ -769,7 +856,7 @@ setInterval(()=>{
   state.turn.left=Math.max(0,left);
   updateTimer();
   const sec=Math.ceil(left/1000);
-  if(sec!==lastSec){lastSec=sec;if(sec<=5&&sec>0)sfx.tick();save();broadcast(tickMsg())}
+  if(sec!==lastSec){lastSec=sec;if(sec<=5&&sec>0)sfx.tick();save();broadcastTick()}
   if(left<=0)endTurn("time");
 },100);
 function pauseTurn(){const t=state.turn;if(!t||t.paused)return;t.left=Math.max(0,t.endsAt-Date.now());t.paused=true}
@@ -780,22 +867,39 @@ function startGame(deckOverride){
   const s=state.settings;
   if(!deckOverride&&ONLINE&&s.phones){
     const prev=state.lobby||{};
-    state.lobby={per:s.lobbyPer||prev.per||10,customs:s.lobbyCustoms!=null?s.lobbyCustoms:(prev.customs!=null?prev.customs:2),players:{},gid:makeCode()+Date.now().toString(36)};
+    state.lobby={per:s.lobbyPer||prev.per||10,customs:s.lobbyCustoms!=null?s.lobbyCustoms:(prev.customs!=null?prev.customs:2),giverPhones:!!s.lobbyGiverPhones,players:{},gid:makeCode()+Date.now().toString(36)};
     state.screen="lobby";ui.err="";hostStart();window.scrollTo(0,0);render();broadcast(hostConfig());return;
   }
   const teams=s.teams.map((t,i)=>({name:(t.name||"").trim()||("Équipe "+(i+1)),color:t.color}));
   const deck=deckOverride||buildDeck(s);
   if(deck.length<5){ui.err="Il faut au moins 5 mots pour jouer : coche une catégorie ou ajoute tes mots.";render();return}
   ui.err="";
+  // Phone turns: each team gets the list of players whose phone will hold the cards, in turn.
+  const L=state.lobby,phoneTurns=!!(deckOverride&&L&&L.giverPhones);
+  const roster={};
+  teams.forEach(t=>t.players=[]);
+  if(phoneTurns)Object.entries(L.players).forEach(([pid,p])=>{if(!p.name)return;roster[pid]={name:p.name};(teams[p.team||0]||teams[0]).players.push(pid)});
   Object.assign(state,{screen:"roundIntro",teams,deck,pile:shuffle(deck.map((_,i)=>i)),round:1,
-    teamIdx:Math.floor(Math.random()*teams.length),scores:teams.map(()=>[0,0,0]),turn:null,duration:s.duration});
+    teamIdx:Math.floor(Math.random()*teams.length),scores:teams.map(()=>[0,0,0]),turn:null,duration:s.duration,
+    phoneTurns,roster,giverIdx:teams.map(()=>0)});
   window.scrollTo(0,0);render();
 }
 function startTurn(){
-  const ms=state.duration*1000;
-  state.turn={rows:[],left:ms,endsAt:Date.now()+ms,paused:false,reason:null};
+  const ms=state.duration*1000,g=giverOf();
+  state.turn={rows:[],left:ms,endsAt:Date.now()+ms,paused:false,reason:null,seq:0,giver:g,onPhone:!!(g&&pidOnline(g))};
   state.screen="turn";lastSec=null;
   sfx.go();wake();render();
+}
+function doFound(){
+  const t=state.turn;if(!t||t.paused)return;
+  const idx=state.pile.shift();setRow(idx,true);t.seq++;sfx.found();
+  if(!state.pile.length)endTurn("empty");else render();
+}
+function doPass(){
+  const t=state.turn;if(!t||t.paused)return;
+  // Skipped cards leave the pile until the end of the turn: they don't come back this turn.
+  const idx=state.pile.shift();setRow(idx,false);t.seq++;sfx.pass();
+  if(!state.pile.length)endTurn("empty");else render();
 }
 function setRow(idx,ok,last){
   const rows=state.turn.rows,r=rows.find(x=>x.i===idx);
@@ -814,6 +918,7 @@ function confirmTurn(){
     else if(!state.pile.includes(r.i))state.pile.push(r.i);
   });
   state.scores[state.teamIdx][state.round-1]+=pts;
+  if(state.phoneTurns)state.giverIdx[state.teamIdx]=(state.giverIdx[state.teamIdx]||0)+1;
   state.pile=shuffle(state.pile);
   state.teamIdx=(state.teamIdx+1)%state.teams.length;
   state.turn=null;
@@ -863,19 +968,10 @@ document.addEventListener("click",e=>{
     case "phones":ui.menu=false;ui.phones=true;hostStart();render();break;
     case "closePhones":ui.phones=false;render();break;
     case "go":startTurn();break;
-    case "found":{
-      if(state.turn.paused)break;
-      const idx=state.pile.shift();setRow(idx,true);sfx.found();
-      if(!state.pile.length)endTurn("empty");else render();
-      break;
-    }
-    case "pass":{
-      if(state.turn.paused)break;
-      // Skipped cards leave the pile until the end of the turn: they don't come back this turn.
-      const idx=state.pile.shift();setRow(idx,false);sfx.pass();
-      if(!state.pile.length)endTurn("empty");else render();
-      break;
-    }
+    case "found":doFound();break;
+    case "pass":doPass();break;
+    case "giverMode":state.lobby.giverPhones=s.lobbyGiverPhones=el.dataset.v==="1";render();broadcastTick();break;
+    case "pteam":{const p=state.lobby.players[el.dataset.pid];if(p){p.team=((p.team||0)+1)%lobbyTeams().length;render();broadcastTick()}break}
     case "pause":pauseTurn();render();break;
     case "resume":resumeTurn();render();break;
     case "toggleRow":{const r=state.turn.rows[+el.dataset.i];r.ok=!r.ok;render();break}
@@ -930,6 +1026,11 @@ function sendWords(){psend({t:"words",picks:ph.picks,custom:ph.custom.filter(Boo
 function phoneView(){
   if(ROLE==="chrono")return "chrono";
   const t=pn.tick;
+  if(t&&t.phase==="game"&&t.me){
+    if(t.screen==="roundIntro"||t.screen==="ready")return "giver";
+    if(t.screen==="turn"&&t.card)return "giver";
+    if(t.screen==="turnEnd"&&t.rows)return "giver";
+  }
   if(t&&t.phase!=="lobby")return "chrono";
   if(t&&t.screen==="setup")return "wait";
   if(!pn.config||!pn.config.gid)return pn.status==="on"?"wait":ph.step;
@@ -945,6 +1046,7 @@ function pStatus(){
 function vPhone(){
   const v=phoneView();
   if(v==="chrono")return vChrono();
+  if(v==="giver")return vGiver();
   let body="";
   if(v==="wait"){
     body=`<div class="phone-main">
@@ -984,7 +1086,8 @@ function vPhone(){
     body=`<div class="phone-main">
       <div class="done-mark">${ICON.ok}</div>
       <h1>C'est envoyé !</h1>
-      <p class="lead">${pn.status==="on"?"Attends que la tablette lance la partie. Ensuite ce téléphone affichera le chrono.":"Tes cartes partiront dès que la connexion revient."}</p>
+      ${pn.tick&&pn.tick.myTeam?`<p class="lead">Tu joues avec</p><span class="pill" style="--team:${esc(pn.tick.myTeam.color)};background:var(--team);color:var(--ink);font-family:var(--display);font-size:1.6rem;padding:6px 18px;border-radius:999px;align-self:center">${esc(pn.tick.myTeam.name)}</span>`:""}
+      <p class="lead">${pn.status==="on"?"Attends que la tablette lance la partie.":"Tes cartes partiront dès que la connexion revient."}</p>
       <div class="mini-list">${ph.picks.concat(ph.custom.filter(Boolean)).map(w=>`<span>${esc(w)}</span>`).join("")}</div>
       <button class="btn btn-ghost small" data-act="pRestart">Refaire mes choix</button>
     </div>`;
@@ -1002,7 +1105,7 @@ function vChrono(){
       <div class="mini-list">${sc.map(x=>`<span>${esc(x.name)} · ${x.total}</span>`).join("")}</div>`;
   }else if(t.screen==="turn"){
     inner=`<span class="pill" style="--team:${esc(t.color)}">${esc(t.team)}</span>
-      <p class="rt">Manche ${t.round} · ${esc(t.roundTitle)}</p>
+      <p class="rt">${t.giverName?esc(t.giverName)+" fait deviner":"Manche "+t.round+" · "+esc(t.roundTitle)}</p>
       <div id="c-num">${Math.ceil((t.left||0)/1000)}<small>″</small></div>
       <div class="bar"><i id="c-bar"></i></div>
       <p class="left">${plural(t.cardsLeft,"carte")} restante${t.cardsLeft>1?"s":""}${t.running?"":" · pause"}</p>`;
@@ -1016,8 +1119,49 @@ function vChrono(){
   return `<div class="phone">${pStatus()}<div class="chrono" id="chrono">${inner}</div>
     ${phoneAudio?"":`<button class="btn btn-ghost small" data-act="pSound">Activer le son du buzzer</button>`}</div>`;
 }
+/* The phone holding the cards: Go, then the card with ✓ / ✗, then the turn recap */
+function vGiver(){
+  const t=pn.tick;
+  if(t.screen==="turn"){
+    return `<div class="play giver-turn">
+      <header class="hud"><span class="pill" style="--team:${esc(t.color)}">${esc(t.team)}</span><span class="hud-mid">${esc(t.roundTitle)}</span></header>
+      <div class="stage">
+        <div class="stage-a" id="chrono">
+          <div class="timer"><span id="c-num">${Math.ceil((t.left||0)/1000)}<small>″</small></span><div class="bar"><i id="c-bar"></i></div></div>
+          <div class="card enter"><div class="word">${esc(t.card)}</div><span class="badge">${t.cardsLeft}</span></div>
+        </div>
+        <div class="stage-b">
+          <button class="round-btn ok" data-act="gFound" aria-label="Trouvé">${ICON.ok}</button>
+          <button class="round-btn no" data-act="gPass" aria-label="Passer">${ICON.no}</button>
+        </div>
+      </div>
+      ${t.paused?`<div class="pause-layer"><h2>Pause</h2><p class="hint">La tablette a mis le jeu en pause.</p></div>`:""}
+    </div>`;
+  }
+  if(t.screen==="turnEnd"){
+    const pts=t.rows.filter(r=>r.ok).length;
+    return `<div class="phone"><div class="phone-main">
+      <h1 class="${t.reason==="time"?"":""}">${esc(t.title||"Fin du tour")}</h1>
+      <p class="recap-head"><b>+${plural(pts,"point")}</b> pour ${esc(t.team)}</p>
+      <div class="recap">${t.rows.map((r,i)=>`<button class="tr ${r.ok?"is-ok":(r.last?"is-last":"is-no")}" data-act="gToggle" data-i="${i}"><span>${esc(r.w)}</span><i>${r.ok||r.last?ICON.ok:ICON.no}</i></button>`).join("")||`<p class="lead">Aucune carte ce tour-ci.</p>`}</div>
+      <p class="hint">Touche une carte pour corriger.</p>
+      <button class="btn btn-sun wide" data-act="gConfirm">Valider</button>
+    </div></div>`;
+  }
+  return `<div class="phone">${pStatus()}<div class="phone-main">
+    <p class="rt" style="font-family:var(--display);font-size:1.5rem;color:var(--sun)">Manche ${t.round} · ${esc(t.roundTitle)}</p>
+    <h1>C'est toi qui fais deviner !</h1>
+    <p class="lead">Mets-toi face à ton équipe, puis lance le chrono.</p>
+    <button class="btn btn-team" style="--team:${esc(t.color)}" data-act="gGo"><small>${esc(t.team)}</small><strong>Go !</strong></button>
+  </div></div>`;
+}
 let phoneAudio=false;
-function prender(){app.className="scroll";app.innerHTML=vPhone();pUpdateTimer()}
+function prender(){
+  const v=phoneView();
+  app.className=(v==="giver"&&pn.tick&&pn.tick.screen==="turn")?"fill":"scroll";
+  pn.lock=false;
+  app.innerHTML=vPhone();pUpdateTimer();
+}
 function pLeft(){const t=pn.tick;if(!t||t.left==null)return 0;return Math.max(0,t.running?t.left-(Date.now()-pn.tickAt):t.left)}
 function pUpdateTimer(){
   const num=document.getElementById("c-num");if(!num)return;
@@ -1046,15 +1190,16 @@ function onPhoneData(d){
     return;
   }
   if(d.t==="tick"){
-    const before=phoneView(),prev=pn.tick||{},prevScreen=prev.screen;
-    const changed=prev.cardsLeft!==d.cardsLeft||prev.running!==d.running||prev.team!==d.team;
+    const before=phoneView();
     if(pn.wasRunning&&d.screen==="turnEnd"&&d.reason==="time")sfx.buzz();
     pn.wasRunning=d.screen==="turn"&&d.running;
     pn.tick=d;pn.tickAt=Date.now();
     const after=phoneView();
-    if(after==="chrono"&&(before!=="chrono"||prevScreen!==d.screen||d.screen!=="turn"||changed))prender();
-    else if(after==="chrono")pUpdateTimer();
-    else if(before!==after)prender();
+    // Re-render only when something visible changed (never on the name / pick / custom screens, which hold inputs).
+    const live=["chrono","giver","sent","wait"].includes(after);
+    const sig=after+"|"+(live?JSON.stringify([d.screen,d.card,d.seq,d.rows,d.paused,d.cardsLeft,d.running,d.team,d.giverName,d.myTeam&&d.myTeam.name,d.reason,d.phase]):"");
+    if(sig!==pn.sig||before!==after){pn.sig=sig;prender()}
+    else pUpdateTimer();
   }
 }
 async function phoneConnect(){
@@ -1102,13 +1247,24 @@ function phoneBoot(){
         ph.name=v;ph.step="pick";newPair();psave();psend({t:"progress",n:ph.picks.length});prender();break}
       case "pick":{const w=ph.pair[+el.dataset.i];if(w&&!ph.picks.includes(w))ph.picks.push(w);
         if(ph.picks.length>=perPlayer())finishPicks();else newPair();
-        psave();psend({t:"progress",n:ph.picks.length});sfx.found();prender();break}
+        psave();if(ph.step!=="sent")psend({t:"progress",n:ph.picks.length});sfx.found();prender();break}
       case "reroll":newPair();prender();break;
       case "pSend":ph.custom=Array.from({length:nCustoms()},(_,i)=>{const f=document.getElementById("p-c"+i);return f?cleanStr(f.value,60):""});
         ph.step="sent";psave();sendWords();prender();break;
       case "pUndo":ph.step="pick";ph.picks.pop();newPair();psave();psend({t:"progress",n:ph.picks.length});prender();break;
       case "pRestart":ph.step="pick";ph.picks=[];newPair();psave();psend({t:"progress",n:0});prender();break;
       case "pSound":sfx.found();prender();break;
+      case "gGo":psend({t:"act",a:"go"});break;
+      case "gFound":case "gPass":{
+        if(pn.lock||!pn.tick||pn.tick.paused)return;
+        pn.lock=true;setTimeout(()=>{pn.lock=false},1500);
+        const a=el.dataset.act==="gFound"?"found":"pass";
+        psend({t:"act",a,seq:pn.tick.seq});
+        if(a==="found")sfx.found();else sfx.pass();
+        break;
+      }
+      case "gToggle":psend({t:"act",a:"toggle",i:+el.dataset.i});break;
+      case "gConfirm":psend({t:"act",a:"confirm"});break;
     }
   });
   document.addEventListener("input",e=>{const m=/^p-c(\d)$/.exec(e.target.id);if(m){ph.custom[+m[1]]=e.target.value;psave()}else if(e.target.id==="p-name"){ph.name=e.target.value;psave()}});
