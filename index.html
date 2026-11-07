@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<!-- Time's Up Maison · v1.13 -->
+<!-- Time's Up Maison · v1.14 -->
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1B2A8C">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -406,7 +406,7 @@ textarea.field{min-height:130px;padding:12px 14px;resize:vertical;line-height:1.
 
 <div id="app"></div>
 <div id="adm"></div>
-<div class="ver" id="ver" aria-hidden="true">v1.13</div>
+<div class="ver" id="ver" aria-hidden="true">v1.14</div>
 
 <script>
 (function(){
@@ -626,13 +626,23 @@ function emptiestTeam(){
   return n.indexOf(Math.min(...n));
 }
 /* Phone turns: who holds the cards this turn (a player pid), or null when the tablet shows them */
-function giverOf(){
-  if(!state.phoneTurns||!state.teams)return null;
+/* Who makes their team guess this turn, from the teams chosen on the phones (both modes). */
+function readerOf(){
+  if(!state.teams||!state.roster)return null;
   const list=state.teams[state.teamIdx].players||[];
   if(!list.length)return null;
-  return list[(state.giverIdx[state.teamIdx]||0)%list.length];
+  return list[((state.giverIdx&&state.giverIdx[state.teamIdx])||0)%list.length];
 }
+function readerName(){const r=readerOf();return r&&state.roster[r]?state.roster[r].name:""}
+// Phone turns only: that player's phone holds the cards.
+function giverOf(){return state.phoneTurns?readerOf():null}
 function giverName(){const g=giverOf();return g&&state.roster[g]?state.roster[g].name:""}
+// Tablet mode: just say who takes the tablet.
+function tabletReaderLine(){
+  if(giverOf())return "";
+  const n=readerName();
+  return n?`<p class="who">C'est <b>${esc(n)}</b> qui fait deviner : prends la tablette !</p>`:"";
+}
 function pidOnline(pid){let on=false;net.conns.forEach(c=>{if(c.pid===pid&&c.conn.open)on=true});return on}
 
 function vLobby(){
@@ -651,10 +661,10 @@ function vLobby(){
       <div class="opt"><span>Cartes à choisir</span><div class="seg">${[5,8,10].map(k=>seg("per",k,L.per===k,k)).join("")}</div></div>
       <div class="opt"><span>Cartes perso à écrire</span><div class="seg">${[0,1,2,3].map(k=>seg("customs",k,L.customs===k,k?k:"Aucune")).join("")}</div></div>
       <div class="opt"><span>Cartes affichées sur</span><div class="seg">${seg("giverMode",0,!L.giverPhones,"La tablette")}${seg("giverMode",1,!!L.giverPhones,"Les téléphones")}</div>
-        ${L.giverPhones?`<div class="legend-teams">${lobbyTeams().map(t=>`<span><i style="--team:${t.color}"></i>${esc(t.name)}</span>`).join("")}<span class="hint">Touche la pastille d'un joueur pour changer son équipe</span>${ps.length&&emptyLobbyTeams().length?`<span class="who warn" style="flex-basis:100%;font-size:.9rem">${emptyLobbyTeams().map(esc).join(", ")} : aucun joueur, ses tours se joueront sur la tablette.</span>`:""}</div>`:""}</div>
+        ${ps.length?`<div class="legend-teams">${lobbyTeams().map(t=>`<span><i style="--team:${t.color}"></i>${esc(t.name)}</span>`).join("")}<span class="hint">Touche la pastille d'un joueur pour changer son équipe</span>${L.giverPhones&&emptyLobbyTeams().length?`<span class="who warn" style="flex-basis:100%;font-size:.9rem">${emptyLobbyTeams().map(esc).join(", ")} : aucun joueur, ses tours se joueront sur la tablette.</span>`:""}</div>`:""}</div>
       <button class="btn btn-sun wide" data-act="lobbyStart" ${n<5?"disabled":""}>Lancer la partie · ${plural(n,"carte")}</button>
       <p class="hint">${ready}/${ps.length} prêt${ready>1?"s":""}${n<5?" · il faut au moins 5 cartes":""} · touche la couronne d'un joueur pour le faire admin (il pilote la tablette depuis son téléphone)</p>
-      <ul class="players">${ps.length?ps.map(([pid,p])=>{const tm=lobbyTeams()[p.team||0]||lobbyTeams()[0];return `<li class="${p.ready?"ready":""}"><span class="pdot ${p.online?"on":""}"></span><b>${esc(p.name||"…")}</b><button class="crown-btn ${state.admin===pid?"on":""}" data-act="setAdmin" data-pid="${esc(pid)}" aria-label="${state.admin===pid?"Retirer l'admin à ":"Donner l'admin à "}${esc(p.name)}">${ICON.crown}</button>${L.giverPhones?`<button class="tdot" style="--team:${tm.color}" data-act="pteam" data-pid="${esc(pid)}" aria-label="${esc(p.name)} joue avec ${esc(tm.name)}, toucher pour changer"></button>`:""}<span class="st">${p.ready?"✓":Math.min(p.n,L.per)+"/"+L.per}</span><button class="kick" data-act="kick" data-pid="${esc(pid)}" aria-label="Retirer ${esc(p.name)}">✕</button></li>`}).join(""):`<li class="empty">Personne pour l'instant</li>`}</ul>
+      <ul class="players">${ps.length?ps.map(([pid,p])=>{const tm=lobbyTeams()[p.team||0]||lobbyTeams()[0];return `<li class="${p.ready?"ready":""}"><span class="pdot ${p.online?"on":""}"></span><b>${esc(p.name||"…")}</b><button class="crown-btn ${state.admin===pid?"on":""}" data-act="setAdmin" data-pid="${esc(pid)}" aria-label="${state.admin===pid?"Retirer l'admin à ":"Donner l'admin à "}${esc(p.name)}">${ICON.crown}</button><button class="tdot" style="--team:${tm.color}" data-act="pteam" data-pid="${esc(pid)}" aria-label="${esc(p.name)} joue avec ${esc(tm.name)}, toucher pour changer"></button><span class="st">${p.ready?"✓":Math.min(p.n,L.per)+"/"+L.per}</span><button class="kick" data-act="kick" data-pid="${esc(pid)}" aria-label="Retirer ${esc(p.name)}">✕</button></li>`}).join(""):`<li class="empty">Personne pour l'instant</li>`}</ul>
     </div>
   </div>`;
 }
@@ -681,7 +691,7 @@ function vRoundIntro(){
     </div>
     ${giverOf()?`<div class="btn btn-team as-label" style="--team:${t.color}"><small>Ça commence avec</small><strong>${esc(t.name)}</strong></div>
       ${whoLine()}${tabletFallback("go")}`
-    :`<button class="btn btn-team" style="--team:${t.color}" data-act="go"><small>Ça commence avec</small><strong>${esc(t.name)}</strong></button>`}
+    :`${tabletReaderLine()}<button class="btn btn-team" style="--team:${t.color}" data-act="go"><small>Ça commence avec</small><strong>${esc(t.name)}</strong></button>`}
   </div>`;
 }
 
@@ -714,11 +724,12 @@ function vReady(){
         ${g?`<div class="disc" style="--team:${t.color}">
           <small>Au tour de</small><strong>${esc(t.name)}</strong><span class="go-pill">${esc(giverName())}</span>
         </div>`:`<button class="disc" style="--team:${t.color}" data-act="go" aria-label="Lancer le chrono pour ${esc(t.name)}">
-          <small>Au tour de</small><strong>${esc(t.name)}</strong><span class="go-pill">Go !</span>
+          <small>Au tour de</small><strong>${esc(t.name)}</strong><span class="go-pill">${readerName()?esc(readerName())+" · Go !":"Go !"}</span>
         </button>`}
       </div>
     </div>
     <div class="rg-b">
+      ${tabletReaderLine()}
       ${g?whoLine()+tabletFallback("go"):""}
       ${liveScores(teamTotals(),lastTurnInfo())}
       <p class="meta-line">${plural(state.pile.length,"carte")} restante${state.pile.length>1?"s":""} dans la manche</p>
@@ -1011,7 +1022,7 @@ function baseTick(pid){
   const m={t:"tick",phase,screen:s};
   if(phase==="lobby"){
     const L=state.lobby,p=L&&pid&&L.players[pid];
-    if(s==="lobby"&&L&&L.giverPhones&&p){const tm=lobbyTeams()[p.team||0];if(tm)m.myTeam=tm}
+    if(s==="lobby"&&L&&p){const tm=lobbyTeams()[p.team||0];if(tm)m.myTeam=tm}
     return m;
   }
   if(!state.teams)return m;
@@ -1023,7 +1034,7 @@ function baseTick(pid){
     running,left,dur:(state.duration||30)*1000,reason:t?t.reason:null,
     cardsLeft:(state.pile?state.pile.length:0)+(t?t.rows.filter(r=>!r.ok).length:0),
     last:lastTurnInfo(),
-    giverName:giver&&state.roster[giver]?state.roster[giver].name:"",
+    giverName:readerName(),
     scores:state.teams.map((x,i)=>({name:x.name,color:x.color,total:total(i)}))});
   // Only the player holding the cards ever receives the word.
   if(pid&&giver===pid){
@@ -1098,7 +1109,8 @@ function startGame(deckOverride){
   const L=state.lobby,phoneTurns=!!(deckOverride&&L&&L.giverPhones);
   const roster={};
   teams.forEach(t=>t.players=[]);
-  if(phoneTurns)Object.entries(L.players).forEach(([pid,p])=>{if(!p.name)return;roster[pid]={name:p.name};(teams[p.team||0]||teams[0]).players.push(pid)});
+  // Teams chosen on the phones count in both modes (who reads each turn); phoneTurns only decides where the cards show.
+  if(deckOverride&&L)Object.entries(L.players).forEach(([pid,p])=>{if(!p.name)return;roster[pid]={name:p.name};(teams[p.team||0]||teams[0]).players.push(pid)});
   Object.assign(state,{screen:"roundIntro",teams,deck,pile:shuffle(deck.map((_,i)=>i)),round:1,
     teamIdx:Math.floor(Math.random()*teams.length),scores:teams.map(()=>[0,0,0]),turn:null,duration:s.duration,
     phoneTurns,roster,giverIdx:teams.map(()=>0),lastTurn:null});
@@ -1139,7 +1151,7 @@ function confirmTurn(){
   });
   state.scores[state.teamIdx][state.round-1]+=pts;
   state.lastTurn={team:state.teamIdx,pts};
-  if(state.phoneTurns)state.giverIdx[state.teamIdx]=(state.giverIdx[state.teamIdx]||0)+1;
+  if(state.giverIdx&&(state.teams[state.teamIdx].players||[]).length)state.giverIdx[state.teamIdx]=(state.giverIdx[state.teamIdx]||0)+1;
   state.pile=shuffle(state.pile);
   state.teamIdx=(state.teamIdx+1)%state.teams.length;
   state.turn=null;
@@ -1407,11 +1419,11 @@ function vAdminPanel(a){
       <ul class="adm-players">${L.players.map(p=>{
         const tm=L.teams[p.team]||L.teams[0],armed=pAdm.arm==="k"+p.pid;
         return `<li class="${p.ready?"ready":""}"><span class="pdot ${p.online?"on":""}"></span><b>${esc(p.name)}</b>
-          ${L.giverPhones?`<button class="adm-team" style="--team:${esc(tm.color)}" data-act="adm" data-a="pteam" data-pid="${esc(p.pid)}">${esc(tm.name)}</button>`:""}
+          <button class="adm-team" style="--team:${esc(tm.color)}" data-act="adm" data-a="pteam" data-pid="${esc(p.pid)}">${esc(tm.name)}</button>
           <span class="st">${p.ready?"✓":p.n+"/"+L.per}</span>
           <button class="adm-kick ${armed?"arm":""}" data-act="${armed?"adm":"admArm"}" data-a="kick" data-pid="${esc(p.pid)}" data-k="k${esc(p.pid)}">${armed?"Retirer ?":"✕"}</button></li>`;
       }).join("")||`<li>Personne pour l'instant</li>`}</ul>
-      ${L.giverPhones?`<p class="hint">Touche l'équipe d'un joueur pour le changer d'équipe.</p>`:""}
+      <p class="hint">Touche l'équipe d'un joueur pour le changer d'équipe.</p>
       ${L.emptyTeams&&L.emptyTeams.length?`<p class="who warn">${L.emptyTeams.map(esc).join(", ")} : aucun joueur, ses tours se joueront sur la tablette.</p>`:""}
       <button class="btn btn-sun wide" data-act="adm" data-a="lobbyStart" ${L.n<5?"disabled":""}>Lancer la partie · ${plural(L.n,"carte")}</button>
     </div>`;
