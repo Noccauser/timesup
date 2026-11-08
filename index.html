@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<!-- Time's Up Maison · v1.18 -->
+<!-- Time's Up Maison · v1.19 -->
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1B2A8C">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -475,15 +475,25 @@ textarea.field{min-height:130px;padding:12px 14px;resize:vertical;line-height:1.
 .lb li{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:14px;background:rgba(255,255,255,.06);font-size:1.1rem}
 .lb li:nth-child(even){background:rgba(255,255,255,.03)}
 .lb li b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.lb li.me{background:var(--sun);color:var(--ink)}
-.lb-rank{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);background:rgba(255,255,255,.12);flex:none}
-.lb-rank.r1{background:var(--sun);color:var(--ink)} .lb li.me .lb-rank{background:var(--ink);color:var(--sun)}
+.lb li.p1,.lb li.p2,.lb li.p3{color:var(--ink);padding:13px 14px;font-size:1.2rem;box-shadow:inset 0 -3px 0 rgba(0,0,0,.14)}
+.lb li.p1{background:linear-gradient(135deg,#FFE27A,#F2B705);font-size:1.3rem;padding:16px 14px}
+.lb li.p2{background:linear-gradient(135deg,#F1F3F8,#AEB7C9)}
+.lb li.p3{background:linear-gradient(135deg,#F6B884,#C47236)}
+.lb li.me{outline:3px solid var(--paper);outline-offset:3px}
+.lb li.me b::after{content:"vous";margin-left:8px;font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;padding:2px 7px;border-radius:999px;background:var(--paper);color:var(--ink);vertical-align:middle}
+.lb-rank{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);background:rgba(255,255,255,.12);flex:none}
+.lb li.p1 .lb-rank,.lb li.p2 .lb-rank,.lb li.p3 .lb-rank{background:var(--ink);color:#fff}
+.lb li.p1 .lb-rank{width:40px;height:40px;color:#FFD23F}
+.lb-rank svg{width:22px;height:22px}
 .lb-score{font-family:var(--display);font-size:1.5rem;min-width:2ch;text-align:right}
 .lb-empty{text-align:center;margin:6px 0}
 .duo-final{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:1.15rem;color:var(--muted);text-align:center}
 .duo-big{font-family:var(--display);font-size:clamp(6rem,24vw,10rem);line-height:1;color:var(--sun)}
 .duo-msg{font-family:var(--display);font-size:clamp(1.5rem,5vw,2.2rem);color:var(--paper);margin:0}
 .duo-msg.gold{color:var(--sun)}
+.duo-sub{margin:4px 0 0;color:var(--muted);font-size:1.05rem}
+.lb li.p1.me b::after,.lb li.p2.me b::after,.lb li.p3.me b::after{background:var(--ink);color:#fff}
+.upd{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:99;background:var(--paper);color:var(--ink);font-weight:800;padding:10px 18px;border-radius:999px;box-shadow:0 6px 20px rgba(0,0,0,.3)}
 .duo-score{font-family:var(--display);font-size:1.4rem}
 .timer{position:relative}
 .time-pop{position:absolute;right:4%;top:12%;font-family:var(--display);font-size:clamp(1.8rem,6vw,2.6rem);pointer-events:none;animation:tpop 1.1s ease-out forwards;text-shadow:0 3px 0 rgba(6,10,50,.35)}
@@ -493,7 +503,8 @@ textarea.field{min-height:130px;padding:12px 14px;resize:vertical;line-height:1.
 
 <div id="app"></div>
 <div id="adm"></div>
-<div class="ver" id="ver" aria-hidden="true">v1.18</div>
+<div class="ver" id="ver" aria-hidden="true">v1.19</div>
+<div class="upd" id="upd" hidden>Mise à jour…</div>
 
 <script>
 (function(){
@@ -1017,8 +1028,22 @@ function vRules(){
 /* ---------- duo mode: 2 players against the clock ---------- */
 const DUO_START=60000,DUO_BONUS=3000,DUO_MALUS=3000,LB_KEY="tu-duo-scores";
 function lbAll(){const v=store.get(LB_KEY);return v&&typeof v==="object"?v:{}}
-function lbFor(r){return (lbAll()["r"+r]||[]).slice().sort((x,y)=>y.score-x.score||x.ts-y.ts)}
-function lbAdd(r,e){const all=lbAll(),k="r"+r;all[k]=(all[k]||[]).concat(e).sort((x,y)=>y.score-x.score||x.ts-y.ts).slice(0,30);store.set(LB_KEY,all)}
+// Same two people (any order, any case/accents) = same duo.
+function duoKey(a,b){const n=x=>String(x||"").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");return [n(a),n(b)].sort().join("&")}
+function lbClean(list){
+  const best={};
+  (list||[]).forEach(e=>{const k=duoKey(e.a,e.b);if(!best[k]||e.score>best[k].score||(e.score===best[k].score&&e.ts<best[k].ts))best[k]=e});
+  return Object.values(best).sort((x,y)=>y.score-x.score||x.ts-y.ts);
+}
+function lbFor(r){return lbClean(lbAll()["r"+r])}
+// Returns {prev, improved, ts}: ts = the duo's entry to highlight.
+function lbAdd(r,e){
+  const all=lbAll(),k="r"+r,list=lbClean(all[k]),key=duoKey(e.a,e.b);
+  const old=list.find(x=>duoKey(x.a,x.b)===key);
+  const res={prev:old?old.score:0,improved:!old||e.score>old.score,ts:old?old.ts:e.ts};
+  if(res.improved){res.ts=e.ts;all[k]=list.filter(x=>x!==old).concat(e).sort((x,y)=>y.score-x.score||x.ts-y.ts).slice(0,50);store.set(LB_KEY,all)}
+  return res;
+}
 function duoNames(){const s=state.settings;return {a:(s.duoA||"").trim()||"Joueur 1",b:(s.duoB||"").trim()||"Joueur 2"}}
 function duoDeck(){
   const s=state.settings,used=new Set(store.get(USED)||[]);
@@ -1029,7 +1054,7 @@ function duoDeck(){
 function lbList(r,hiTs){
   const list=lbFor(r).slice(0,10);
   if(!list.length)return `<p class="hint lb-empty">Pas encore de score dans cette manche. À vous d'ouvrir le classement !</p>`;
-  return `<ol class="lb">${list.map((e,i)=>`<li class="${e.ts===hiTs?"me":""}"><span class="lb-rank r${i+1}">${i+1}</span><b>${esc(e.a)} &amp; ${esc(e.b)}</b><span class="lb-score">${e.score}</span></li>`).join("")}</ol>`;
+  return `<ol class="lb">${list.map((e,i)=>`<li class="${i<3?"p"+(i+1):""} ${e.ts===hiTs?"me":""}"><span class="lb-rank">${i===0?ICON.crown:i+1}</span><b>${esc(e.a)} &amp; ${esc(e.b)}</b><span class="lb-score">${e.score}</span></li>`).join("")}</ol>`;
 }
 function vDuoSetup(){
   const s=state.settings,r=s.duoRound||1;
@@ -1102,14 +1127,20 @@ function vDuoTurn(){
 }
 function vDuoEnd(){
   const d=state.duo,R=ROUNDS[d.round-1],list=lbFor(d.round);
-  const rank=d.saved?list.findIndex(e=>e.ts===d.saved)+1:0;
-  const msg=!d.score?"Aucune carte cette fois, retentez !":rank===1?"Nouveau record !":rank?`${rank}e du classement`:"";
-  const conf=rank===1?`<div class="confetti" aria-hidden="true">${Array.from({length:42},(_,i)=>`<i style="left:${Math.random()*100}%;--c:${COLORS[i%COLORS.length]};--d:${2.2+Math.random()*1.8}s;--w:${Math.random()*.8}s"></i>`).join("")}</div>`:"";
+  const rank=d.saved?list.findIndex(e=>e.ts===d.saved)+1:0,rk=rank===1?"1er":rank+"e";
+  const top=rank===1&&d.improved;
+  const [msg,sub]=!d.score?["Aucune carte cette fois, retentez !",""]
+    :top?["Nouveau record !",d.prev?`Votre ancien record : ${d.prev}`:""]
+    :!rank?["",""]
+    :d.improved&&d.prev?["Record perso battu !",`Avant : ${d.prev} · ${rk} du classement`]
+    :d.improved?[`${rk} du classement`,""]
+    :[`Votre record reste ${d.prev}`,`${rk} du classement`];
+  const conf=top?`<div class="confetti" aria-hidden="true">${Array.from({length:42},(_,i)=>`<i style="left:${Math.random()*100}%;--c:${COLORS[i%COLORS.length]};--d:${2.2+Math.random()*1.8}s;--w:${Math.random()*.8}s"></i>`).join("")}</div>`:"";
   return `<div class="topbar"><span class="t-label">Mode duo · ${R.label}</span><button class="icon-btn" data-act="toHome">Accueil</button></div>
   <div class="center-col">
     <h1 class="mega" style="font-size:clamp(2.4rem,9vw,4rem)">Temps écoulé !</h1>
     <div class="duo-final"><span class="duo-big">${d.score}</span><span>carte${d.score>1?"s":""} pour ${esc(d.a)} &amp; ${esc(d.b)}</span></div>
-    ${msg?`<p class="duo-msg ${rank===1?"gold":""}">${msg}</p>`:""}
+    ${msg?`<div><p class="duo-msg ${top?"gold":""}">${msg}</p>${sub?`<p class="duo-sub">${sub}</p>`:""}</div>`:""}
     <div class="end-actions">
       <button class="btn btn-sun" data-act="duoStart">Rejouer</button>
       <button class="btn btn-ghost" data-act="duoBack">Changer de duo</button>
@@ -1147,7 +1178,7 @@ function duoNext(found){
 }
 function duoEnd(){
   const d=state.duo;d.left=0;sfx.buzz();
-  if(d.score>0&&!d.saved){d.saved=Date.now();lbAdd(d.round,{a:d.a,b:d.b,score:d.score,ts:d.saved})}
+  if(d.score>0&&!d.saved){const r=lbAdd(d.round,{a:d.a,b:d.b,score:d.score,ts:Date.now()});d.saved=r.ts;d.improved=r.improved;d.prev=r.prev}
   state.screen="duoEnd";window.scrollTo(0,0);render();
 }
 setInterval(()=>{
@@ -2023,6 +2054,38 @@ function start(data){
   if(ONLINE)claimHost();
   render();
   if(ONLINE&&(state.screen==="lobby"||state.online))hostStart();
+}
+/* ---------- auto update ----------
+   On launch and each time the app comes back to the screen, it checks GitHub for a newer
+   index.html and reloads itself (never in the middle of a turn). No need to redo the bookmark. */
+const VERSION="v1.19";
+let newVer=null;
+function calmToReload(){
+  if(ROLE!=="host")return !(pn.tick&&pn.tick.me&&pn.tick.screen==="turn");
+  return !state||["home","setup","lobby","duoSetup","duoEnd","gameEnd"].includes(state.screen);
+}
+function applyUpdate(){
+  if(!newVer||!calmToReload())return;
+  let tried=null;try{tried=sessionStorage.getItem("tu-upd")}catch(e){}
+  if(tried===newVer)return; // already tried once for this version: avoid a reload loop
+  try{sessionStorage.setItem("tu-upd",newVer)}catch(e){}
+  const el=document.getElementById("upd");if(el)el.hidden=false;
+  const q=new URLSearchParams(location.search);q.set("v",newVer.replace(/\D/g,""));
+  setTimeout(()=>location.replace(location.pathname+"?"+q.toString()+location.hash),400);
+}
+async function checkUpdate(){
+  if(!ONLINE)return;
+  try{
+    const r=await fetch(location.pathname+"?check="+Date.now(),{cache:"no-store"});
+    if(!r.ok)return;
+    const m=/const VERSION="(v[\d.]+)"/.exec(await r.text());
+    if(m&&m[1]!==VERSION){newVer=m[1];applyUpdate()}
+  }catch(e){}
+}
+if(ONLINE){
+  setTimeout(checkUpdate,1500);
+  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")checkUpdate()});
+  setInterval(()=>{if(newVer)applyUpdate()},5000);
 }
 if(ROLE!=="host"&&ONLINE){phoneBoot()}
 else{
