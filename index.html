@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<!-- Time's Up nocca · v1.21 -->
+<!-- Time's Up nocca · v1.22 -->
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1B2A8C">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -512,9 +512,9 @@ textarea.field{min-height:130px;padding:12px 14px;resize:vertical;line-height:1.
 .lb-who small{font-size:.8rem;opacity:.7;font-weight:700;letter-spacing:.03em}
 .duo-recap{margin:0;font-size:1.15rem;color:var(--muted)} .duo-recap b{color:var(--paper)}
 .duo-who{margin:6px 0 0;font-size:clamp(1.1rem,3.4vw,1.4rem);font-weight:700;color:var(--paper)}
-.duo-parts{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-.duo-parts span{display:flex;flex-direction:column;align-items:center;min-width:92px;padding:8px 14px;border-radius:14px;background:rgba(255,255,255,.08)}
-.duo-parts small{font-size:.8rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.duo-parts{display:flex;gap:8px;justify-content:center;width:100%;max-width:520px}
+.duo-parts span{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;padding:8px 6px;border-radius:14px;background:rgba(255,255,255,.08)}
+.duo-parts small{font-size:.72rem;white-space:nowrap;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
 .duo-parts b{font-family:var(--display);font-weight:400;font-size:1.8rem}
 .duo-score{font-family:var(--display);font-size:1.4rem}
 .timer{position:relative}
@@ -525,7 +525,7 @@ textarea.field{min-height:130px;padding:12px 14px;resize:vertical;line-height:1.
 
 <div id="app"></div>
 <div id="adm"></div>
-<div class="ver" id="ver" aria-hidden="true">v1.21</div>
+<div class="ver" id="ver" aria-hidden="true">v1.22</div>
 <div class="upd" id="upd" hidden>Mise à jour…</div>
 
 <script>
@@ -1042,16 +1042,18 @@ function vRules(){
     ${ROUNDS.map((R,i)=>`<h3>Manche ${i+1} · ${R.title}</h3><p>${R.rules}</p>`).join("")}
     <p>Après 3 manches, l'équipe avec le plus de points gagne.</p>
     <h3>Mode duo</h3>
-    <p>À deux, en 3 manches. <b>Manche 1</b> : le premier décrit, 60 s, +3 s par carte trouvée, passer est gratuit. Les cartes trouvées forment le paquet des manches suivantes. <b>Manche 2</b> : l'autre fait deviner en un seul mot. <b>Manche 3</b> : le premier mime. En manches 2 et 3 : 60 s, un seul essai par carte. Score = toutes les cartes trouvées. À égalité, le duo qui a fini ses cartes le plus vite passe devant.</p>
+    <p>À deux, en 4 manches. <b>Manches 1 et 2</b> : chacun décrit à son tour, 60 s, +5 s par carte trouvée (20 cartes max), passer est gratuit. Toutes les cartes trouvées forment le paquet des manches suivantes. <b>Manche 3</b> : le premier fait deviner en un seul mot. <b>Manche 4</b> : le second mime. En manches 3 et 4 : 60 s, un seul essai par carte. Score = toutes les cartes trouvées. À égalité, le duo qui a fini ses cartes le plus vite passe devant.</p>
     <button class="btn btn-sun" data-act="closeRules">Compris</button>
   </div></div>`;
 }
 
-/* ---------- duo mode (ranked): 2 players, 3 rounds on the same cards ----------
-   Round 1 (describe): 60 s + 3 s per card found, passing is free. The cards found make the deck.
-   Rounds 2 (one word) and 3 (mime): same cards, 60 s flat, one try per card (✗ = lost for that round).
-   Score = cards found over the 3 rounds; tie-break = seconds left when a deck is finished early. */
-const DUO_START=60000,DUO_BONUS=3000,LB_KEY="tu-duo-ranked";
+/* ---------- duo mode (ranked): 2 players, 4 rounds ----------
+   Rounds 1 and 2 (describe, each player once): 60 s + 5 s per card found, up to 20 cards, passing is free.
+   All cards found make the deck of rounds 3 (one word) and 4 (mime): 60 s flat, one try per card.
+   Score = cards found over the 4 rounds; tie-break = seconds left when a deck is finished early. */
+const DUO_START=60000,DUO_BONUS=5000,DUO_MAX=20,LB_KEY="tu-duo-ranked-4";
+const DUO_KIND=[0,0,1,2],DUO_LABELS=["Décrire 1","Décrire 2","Un mot","Mime"];
+function duoDescribe(d){return DUO_KIND[d.round-1]===0}
 function lbRaw(){const v=store.get(LB_KEY);return Array.isArray(v)?v:[]}
 // Same two people (any order, any case/accents) = same duo.
 function duoKey(a,b){const n=x=>String(x||"").trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");return [n(a),n(b)].sort().join("&")}
@@ -1076,8 +1078,8 @@ function duoDeck(){
   // Fresh words first, already-played ones after.
   return shuffle(pool.filter(x=>!used.has(x.w))).concat(shuffle(pool.filter(x=>used.has(x.w))));
 }
-function duoGiver(d){return d.round===2?d.b:d.a}
-function duoGuesser(d){return d.round===2?d.a:d.b}
+function duoGiver(d){return d.round%2?d.a:d.b}
+function duoGuesser(d){return d.round%2?d.b:d.a}
 function lbList(hiTs){
   const list=lbFor().slice(0,10);
   if(!list.length)return `<p class="hint lb-empty">Pas encore de score. À vous d'ouvrir le classement !</p>`;
@@ -1088,10 +1090,10 @@ function vDuoSetup(){
   return `<div class="setup">
   <div class="topbar"><button class="icon-btn" data-act="toHome">← Accueil</button><span class="t-label">Mode duo</span><button class="icon-btn" data-act="rules">Règles</button></div>
   <div class="duo-hero"><h1 class="mega" style="font-size:clamp(2.6rem,9vw,4rem)">Mode duo</h1>
-    <p class="duo-rule">3 manches, les mêmes cartes, un max de points.</p></div>
+    <p class="duo-rule">4 manches, chacun fait deviner 2 fois, un max de points.</p></div>
   <ol class="duo-steps">
-    <li><span class="n">1</span><div><b>Décrivez</b><small>60 s · <b class="g">+3 s</b> par carte trouvée · passer est gratuit</small></div></li>
-    <li><span class="n">2</span><div><b>Un seul mot</b><small>Seulement les cartes trouvées · 60 s · un seul essai par carte</small></div></li>
+    <li><span class="n">1</span><div><b>Décrivez · chacun son tour</b><small>2 manches · 60 s · <b class="g">+5 s</b> par carte trouvée · passer est gratuit</small></div></li>
+    <li><span class="n">2</span><div><b>Un seul mot</b><small>Toutes les cartes trouvées · 60 s · un seul essai par carte</small></div></li>
     <li><span class="n">3</span><div><b>Mimez</b><small>Les mêmes cartes · 60 s · un seul essai par carte</small></div></li>
   </ol>
   <section class="panel">
@@ -1116,11 +1118,11 @@ function vDuoSetup(){
 </div>`;
 }
 function vDuoReady(){
-  const d=state.duo,R=ROUNDS[d.round-1],n=d.deck.length,g=duoGiver(d),o=duoGuesser(d);
-  const extra=d.round===1
-    ?`<b>60 secondes</b>, et <b>+3 s</b> à chaque carte trouvée. Passer est gratuit. Les cartes trouvées serviront aux manches 2 et 3.`
+  const d=state.duo,R=ROUNDS[DUO_KIND[d.round-1]],n=d.deck.length,g=duoGiver(d),o=duoGuesser(d);
+  const extra=duoDescribe(d)
+    ?`<b>60 secondes</b>, et <b>+5 s</b> à chaque carte trouvée (${DUO_MAX} cartes max). Passer est gratuit. Les cartes trouvées serviront aux manches 3 et 4.`
     :`<b>${n} carte${n>1?"s":""}</b> à refaire, <b>60 secondes</b>. Carte ratée ou passée : perdue pour cette manche.`;
-  return `<div class="topbar"><span class="t-label">Mode duo · Manche ${d.round}/3</span><button class="icon-btn" data-act="duoPause">Pause</button></div>
+  return `<div class="topbar"><span class="t-label">Mode duo · Manche ${d.round}/4</span><button class="icon-btn" data-act="duoPause">Pause</button></div>
   <div class="center-col">
     ${d.round>1?`<p class="duo-recap">Manche ${d.round-1} : <b>${d.parts[d.round-2]}</b> carte${d.parts[d.round-2]>1?"s":""} · Total <b>${d.parts.reduce((x,y)=>x+y,0)}</b></p>
     <h1 class="mega" style="font-size:clamp(2.2rem,7.5vw,3.6rem)">Passe la tablette à ${esc(g)}</h1>`:""}
@@ -1137,8 +1139,8 @@ function duoPauseLayer(){
         :`<button class="btn btn-ghost small" data-act="duoQuitAsk">Arrêter sans enregistrer</button>`}</div>`;
 }
 function vDuoTurn(){
-  const d=state.duo,R=ROUNDS[d.round-1],card=d.deck[d.pos]||{w:""},got=d.parts[d.round-1];
-  const rest=d.deck.length-d.pos,mid=d.round>1?`Encore ${rest} carte${rest>1?"s":""}`:R.title;
+  const d=state.duo,R=ROUNDS[DUO_KIND[d.round-1]],card=d.deck[d.pos]||{w:""},got=d.parts[d.round-1];
+  const rest=d.deck.length-d.pos,mid=duoDescribe(d)?R.title:`Encore ${rest} carte${rest>1?"s":""}`;
   const anim=ui.shake?"shake":"enter";ui.shake=false;
   return `<div class="play">
     <header class="hud">
@@ -1177,7 +1179,7 @@ function vDuoEnd(){
   <div class="center-col">
     <h1 class="mega" style="font-size:clamp(2.4rem,9vw,4rem)">Partie terminée !</h1>
     <div class="duo-final"><span class="duo-big">${total}</span><span>point${total>1?"s":""} pour ${esc(d.a)} &amp; ${esc(d.b)}</span></div>
-    <div class="duo-parts">${ROUNDS.map((R,i)=>`<span><small>${R.label}</small><b>${d.parts[i]}</b></span>`).join("")}</div>
+    <div class="duo-parts">${DUO_LABELS.map((L,i)=>`<span><small>${L}</small><b>${d.parts[i]}</b></span>`).join("")}</div>
     ${msg?`<div><p class="duo-msg ${top?"gold":""}">${msg}</p>${sub?`<p class="duo-sub">${sub}</p>`:""}</div>`:""}
     <div class="end-actions">
       <button class="btn btn-sun" data-act="duoStart">Rejouer</button>
@@ -1193,11 +1195,11 @@ function duoStart(){
   const deck=duoDeck(),n=duoNames();
   if(!deck.length){ui.err="Choisis au moins un thème (ou ajoute tes mots dans la partie normale).";render();return}
   ui.err="";ui.confirmQuit=false;
-  state.duo={a:n.a,b:n.b,round:1,deck,pos:0,found:[],parts:[0,0,0],spare:0,left:DUO_START,endsAt:0,paused:false,saved:0};
+  state.duo={a:n.a,b:n.b,round:1,deck,pos:0,found:[],parts:[0,0,0,0],spare:0,left:DUO_START,endsAt:0,paused:false,saved:0};
   state.screen="duoReady";window.scrollTo(0,0);render();
 }
 function duoMarkUsed(){
-  const d=state.duo;if(d.round!==1||!d.deck[d.pos])return;
+  const d=state.duo;if(!duoDescribe(d)||!d.deck[d.pos])return;
   const used=new Set(store.get(USED)||[]);used.add(d.deck[d.pos].w);store.set(USED,[...used]);
 }
 function duoGo(){const d=state.duo;d.left=DUO_START;d.endsAt=Date.now()+d.left;d.paused=false;state.screen="duoTurn";lastSec=null;duoMarkUsed();sfx.go();wake();render()}
@@ -1209,19 +1211,23 @@ function duoTimePop(txt,good){
 function duoNext(found){
   const d=state.duo;if(!d||d.paused||state.screen!=="duoTurn")return;
   const card=d.deck[d.pos];if(!card)return;
-  if(found){d.parts[d.round-1]++;sfx.found();if(d.round===1){d.found.push(card);d.endsAt+=DUO_BONUS}}else sfx.pass();
+  const desc=duoDescribe(d);
+  if(found){d.parts[d.round-1]++;sfx.found();if(desc){d.found.push(card);d.endsAt+=DUO_BONUS}}else sfx.pass();
   d.pos++;
   d.left=Math.max(0,d.endsAt-Date.now());
-  if(d.pos>=d.deck.length){d.spare+=d.round>1?d.left:0;duoRoundEnd(true);return}
+  if(d.pos>=d.deck.length||(desc&&d.parts[d.round-1]>=DUO_MAX)){d.spare+=d.left;duoRoundEnd(true);return}
   if(d.left<=0){duoRoundEnd(false);return}
   duoMarkUsed();ui.shake=!found;render();
-  if(found&&d.round===1)duoTimePop("+3 s",true);
+  if(found&&desc)duoTimePop("+5 s",true);
 }
 function duoRoundEnd(cleared){
   const d=state.duo;d.left=0;
   if(cleared)sfx.found();else sfx.buzz();
-  if(d.round===3||!d.found.length){duoFinish();return}
-  d.round++;d.deck=shuffle(d.found.slice());d.pos=0;d.left=DUO_START;d.paused=false;
+  if(d.round===4||(d.round===2&&!d.found.length)||(d.round===1&&d.pos>=d.deck.length)){duoFinish();return}
+  d.round++;
+  // Round 2 keeps drawing fresh cards from the same pile; rounds 3-4 replay every card found.
+  if(d.round>=3){d.deck=shuffle(d.found.slice());d.pos=0}
+  d.left=DUO_START;d.paused=false;
   state.screen="duoReady";window.scrollTo(0,0);render();
 }
 function duoFinish(){
@@ -2092,7 +2098,7 @@ function start(data){
   if(st.screen==="turn"&&st.turn)st.turn.paused=true;
   // Duo: a reload pauses the chrono; without a duo in memory, back to the duo screen.
   if(/^duo/.test(st.screen)){
-    if(st.screen!=="duoSetup"&&!(st.duo&&st.duo.parts&&st.duo.deck&&st.duo.deck.length))st.screen="duoSetup";
+    if(st.screen!=="duoSetup"&&!(st.duo&&st.duo.parts&&st.duo.parts.length===4&&st.duo.deck&&st.duo.deck.length))st.screen="duoSetup";
     if(st.screen==="duoTurn"&&!st.duo.paused){st.duo.left=Math.max(0,st.duo.endsAt-Date.now());st.duo.paused=true}
   }
   if(st.screen==="lobby"){if(!st.lobby||!st.code)st={screen:"setup",settings:st.settings}}
@@ -2105,7 +2111,7 @@ function start(data){
 /* ---------- auto update ----------
    On launch and each time the app comes back to the screen, it checks GitHub for a newer
    index.html and reloads itself (never in the middle of a turn). No need to redo the bookmark. */
-const VERSION="v1.21";
+const VERSION="v1.22";
 let newVer=null;
 function calmToReload(){
   if(ROLE!=="host")return !(pn.tick&&pn.tick.me&&pn.tick.screen==="turn");
