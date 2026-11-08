@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<!-- Time's Up Maison · v1.14 -->
+<!-- Time's Up Maison · v1.16 -->
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1B2A8C">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -132,6 +132,22 @@ svg{display:block}
 .adm-players li b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .adm-players .st{color:var(--muted);font-weight:700;font-size:.9rem;font-variant-numeric:tabular-nums}
 .adm-players .ready .st{color:var(--mint)}
+.sheet .adm-players li{flex-direction:column;align-items:stretch;gap:6px}
+.sheet .adm-players li.editing{flex-direction:row;align-items:center}
+.sheet .adm-players li.editing .field{min-height:44px;font-size:1rem}
+.adm-row{display:flex;align-items:center;gap:8px;min-width:0}
+.adm-row .adm-team{max-width:none;flex:1}
+.adm-ico{flex:none;width:36px;height:36px;border:0;border-radius:10px;background:rgba(255,255,255,.08);color:var(--muted);display:grid;place-items:center;cursor:pointer;padding:0}
+.adm-ico svg{width:18px;height:18px}
+.adm-ico.on{background:var(--sun);color:var(--ink)}
+.lock-btn{flex:none;width:26px;height:26px;border:0;background:none;color:var(--muted);opacity:.45;cursor:pointer;padding:2px}
+.lock-btn.on{opacity:1;color:var(--sun)}
+.lock-btn svg{width:100%;height:100%}
+.undo-btn{align-self:center;opacity:.85}
+.plus-pop{position:fixed;left:50%;top:34%;z-index:80;pointer-events:none;font-family:var(--display);font-size:clamp(3.4rem,16vw,6rem);line-height:1;
+  color:var(--team);-webkit-text-stroke:3px var(--paper);paint-order:stroke fill;text-shadow:0 6px 0 rgba(6,10,50,.45);animation:plus 1.5s cubic-bezier(.2,.9,.3,1) forwards}
+@keyframes plus{0%{transform:translate(-50%,10px) scale(.4);opacity:0}15%{transform:translate(-50%,0) scale(1.15);opacity:1}30%{transform:translate(-50%,-10px) scale(1)}100%{transform:translate(-50%,-110px) scale(1);opacity:0}}
+@media (prefers-reduced-motion:reduce){.plus-pop{animation:plusfade 1.2s forwards}@keyframes plusfade{0%,60%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,0)}}}
 .adm-team{border:0;border-radius:999px;background:var(--team);color:var(--ink);font-family:var(--display);font-size:.85rem;padding:5px 10px;cursor:pointer;max-width:42%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .adm-kick{border:0;background:none;color:var(--muted);font-weight:800;cursor:pointer;padding:4px 6px;white-space:nowrap}
 .adm-kick.arm{color:var(--tomato)}
@@ -183,6 +199,11 @@ svg{display:block}
 .or{font-family:var(--display);color:var(--sun);font-size:1.4rem}
 .progress{height:10px;background:rgba(255,255,255,.14);border-radius:999px;overflow:hidden}
 .progress i{display:block;height:100%;background:var(--sun);border-radius:999px}
+.team-pick{width:100%;display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px}
+.tp{border:0;border-radius:16px;min-height:58px;padding:8px 12px;background:var(--team);color:var(--ink);font-family:var(--display);font-size:1.2rem;line-height:1.1;cursor:pointer;
+  opacity:.45;box-shadow:0 5px 0 rgba(6,10,50,.35);overflow-wrap:anywhere;transition:opacity .15s,transform .06s}
+.tp:active{transform:translateY(3px)}
+.tp.on{opacity:1;box-shadow:0 0 0 4px var(--paper),0 8px 0 4px rgba(6,10,50,.35)}
 .done-mark{width:110px;height:110px;margin:0 auto;border-radius:50%;background:var(--mint);color:#06281A;display:grid;place-items:center;box-shadow:0 0 0 7px var(--paper),0 10px 0 7px rgba(6,10,50,.35)}
 .done-mark svg{width:58%;height:58%}
 .mini-list{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
@@ -406,7 +427,7 @@ textarea.field{min-height:130px;padding:12px 14px;resize:vertical;line-height:1.
 
 <div id="app"></div>
 <div id="adm"></div>
-<div class="ver" id="ver" aria-hidden="true">v1.14</div>
+<div class="ver" id="ver" aria-hidden="true">v1.16</div>
 
 <script>
 (function(){
@@ -438,6 +459,9 @@ function makeCode(){const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";let s="";for(let 
 const ICON={
   ok:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12.8l4.6 4.6L19.5 6.8" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   no:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/></svg>',
+  pen:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1.2-4.6L15.8 4.8a2 2 0 0 1 2.8 0l.6.6a2 2 0 0 1 0 2.8L8.6 18.8z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/></svg>',
+  lock:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2.5" fill="currentColor"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" fill="none" stroke="currentColor" stroke-width="2.6"/></svg>',
+  unlock:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M8 10.5V8a4 4 0 0 1 7.6-1.7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>',
   play:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4.5v15l13-7.5z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
   crown:'<svg viewBox="0 0 66 46" aria-hidden="true"><path d="M7 40 4 11l15 13L33 4l14 20 15-13-3 29z" fill="#FFC93C" stroke="#141A3A" stroke-width="3.5" stroke-linejoin="round"/><circle cx="4" cy="11" r="3.5" fill="#FFC93C" stroke="#141A3A" stroke-width="2.5"/><circle cx="33" cy="4" r="3.5" fill="#FFC93C" stroke="#141A3A" stroke-width="2.5"/><circle cx="62" cy="11" r="3.5" fill="#FFC93C" stroke="#141A3A" stroke-width="2.5"/><path d="M10 33h46" stroke="#141A3A" stroke-width="3" stroke-linecap="round"/></svg>'
 };
@@ -664,7 +688,7 @@ function vLobby(){
         ${ps.length?`<div class="legend-teams">${lobbyTeams().map(t=>`<span><i style="--team:${t.color}"></i>${esc(t.name)}</span>`).join("")}<span class="hint">Touche la pastille d'un joueur pour changer son équipe</span>${L.giverPhones&&emptyLobbyTeams().length?`<span class="who warn" style="flex-basis:100%;font-size:.9rem">${emptyLobbyTeams().map(esc).join(", ")} : aucun joueur, ses tours se joueront sur la tablette.</span>`:""}</div>`:""}</div>
       <button class="btn btn-sun wide" data-act="lobbyStart" ${n<5?"disabled":""}>Lancer la partie · ${plural(n,"carte")}</button>
       <p class="hint">${ready}/${ps.length} prêt${ready>1?"s":""}${n<5?" · il faut au moins 5 cartes":""} · touche la couronne d'un joueur pour le faire admin (il pilote la tablette depuis son téléphone)</p>
-      <ul class="players">${ps.length?ps.map(([pid,p])=>{const tm=lobbyTeams()[p.team||0]||lobbyTeams()[0];return `<li class="${p.ready?"ready":""}"><span class="pdot ${p.online?"on":""}"></span><b>${esc(p.name||"…")}</b><button class="crown-btn ${state.admin===pid?"on":""}" data-act="setAdmin" data-pid="${esc(pid)}" aria-label="${state.admin===pid?"Retirer l'admin à ":"Donner l'admin à "}${esc(p.name)}">${ICON.crown}</button><button class="tdot" style="--team:${tm.color}" data-act="pteam" data-pid="${esc(pid)}" aria-label="${esc(p.name)} joue avec ${esc(tm.name)}, toucher pour changer"></button><span class="st">${p.ready?"✓":Math.min(p.n,L.per)+"/"+L.per}</span><button class="kick" data-act="kick" data-pid="${esc(pid)}" aria-label="Retirer ${esc(p.name)}">✕</button></li>`}).join(""):`<li class="empty">Personne pour l'instant</li>`}</ul>
+      <ul class="players">${ps.length?ps.map(([pid,p])=>{const tm=lobbyTeams()[p.team||0]||lobbyTeams()[0];return `<li class="${p.ready?"ready":""}"><span class="pdot ${p.online?"on":""}"></span><b>${esc(p.name||"…")}</b><button class="crown-btn ${state.admin===pid?"on":""}" data-act="setAdmin" data-pid="${esc(pid)}" aria-label="${state.admin===pid?"Retirer l'admin à ":"Donner l'admin à "}${esc(p.name)}">${ICON.crown}</button><button class="lock-btn ${p.locked?"on":""}" data-act="lock" data-pid="${esc(pid)}" aria-label="${p.locked?"Déverrouiller":"Verrouiller"} le nom et l'équipe de ${esc(p.name)}">${p.locked?ICON.lock:ICON.unlock}</button><button class="tdot" style="--team:${tm.color}" data-act="pteam" data-pid="${esc(pid)}" aria-label="${esc(p.name)} joue avec ${esc(tm.name)}, toucher pour changer"></button><span class="st">${p.ready?"✓":Math.min(p.n,L.per)+"/"+L.per}</span><button class="kick" data-act="kick" data-pid="${esc(pid)}" aria-label="Retirer ${esc(p.name)}">✕</button></li>`}).join(""):`<li class="empty">Personne pour l'instant</li>`}</ul>
     </div>
   </div>`;
 }
@@ -704,11 +728,12 @@ function whoLine(){
     :`<p class="who warn">Le téléphone de <b>${esc(giverName())}</b> est déconnecté. Il suffit de rouvrir la page sur son téléphone.</p>`;
 }
 function tabletFallback(kind){
-  if(!ui.confirmTablet)return `<button class="link-btn" data-act="askTablet">Jouer ce tour sur la tablette</button>`;
+  const recap=kind==="recap";
+  if(!ui.confirmTablet)return `<button class="link-btn" data-act="askTablet">${recap?"Vérifier les cartes sur la tablette":"Jouer ce tour sur la tablette"}</button>`;
   return `<div class="confirm-box">
     <p><b>Sûr ?</b> Les cartes vont s'afficher sur la tablette, tout le monde pourra les voir.</p>
     <div class="confirm-row">
-      <button class="btn btn-tomato small" data-act="${kind==="go"?"goTablet":"takeoverTablet"}">Oui, jouer sur la tablette</button>
+      <button class="btn btn-tomato small" data-act="${kind==="go"?"goTablet":(recap?"recapTablet":"takeoverTablet")}">Oui, afficher sur la tablette</button>
       <button class="btn btn-ghost small" data-act="cancelTablet">Annuler</button>
     </div>
   </div>`;
@@ -733,6 +758,7 @@ function vReady(){
       ${g?whoLine()+tabletFallback("go"):""}
       ${liveScores(teamTotals(),lastTurnInfo())}
       <p class="meta-line">${plural(state.pile.length,"carte")} restante${state.pile.length>1?"s":""} dans la manche</p>
+      ${undoLink()}
     </div>
   </div>`;
 }
@@ -810,6 +836,18 @@ function vTurnEnd(){
   const t=state.turn,team=state.teams[state.teamIdx];
   const pts=t.rows.filter(r=>r.ok).length;
   const title=t.reason==="time"?"Temps écoulé !":(t.rows.some(r=>!r.ok)?"Plus de cartes pour ce tour !":"Plus de cartes !");
+  if(t.onPhone){
+    // The cards were on a phone: the words (found or not) stay on that phone, the tablet only shows who is checking.
+    const name=state.roster[t.giver]?state.roster[t.giver].name:"";
+    return `${topbar("Manche "+state.round+" · "+esc(team.name))}
+    <div class="center-col">
+      <h1 class="mega" style="font-size:clamp(2.6rem,10vw,4.4rem)">${title}</h1>
+      <p class="recap-head"><b>+${plural(pts,"point")}</b> pour ${esc(team.name)}</p>
+      ${pidOnline(t.giver)
+        ?`<p class="who"><b>${esc(name)}</b> vérifie les cartes sur son téléphone, puis valide.</p>`
+        :`<p class="who warn">Le téléphone de <b>${esc(name)}</b> est déconnecté. Rouvre la page sur son téléphone pour vérifier les cartes.</p>${tabletFallback("recap")}`}
+    </div>`;
+  }
   return `${topbar("Manche "+state.round+" · "+esc(team.name))}
   <div class="center-col">
     <h1 class="mega" style="font-size:clamp(2.6rem,10vw,4.4rem)">${title}</h1>
@@ -829,6 +867,7 @@ function vRoundEnd(){
     <div class="titles"><h1 class="mega">Manche ${r}</h1><p class="mega-sub">Fin de manche</p></div>
     ${board()}
     <button class="btn btn-sun wide" style="max-width:560px" data-act="nextRound">${r<3?"Manche suivante":"Résultat final"}</button>
+    ${undoLink()}
   </div>`;
 }
 
@@ -969,7 +1008,7 @@ function openHostPeer(){
 function rerenderNet(){
   if(ROLE!=="host")return;
   const s=state.screen;
-  if(s==="lobby"||ui.phones||((s==="ready"||s==="roundIntro")&&state.phoneTurns)||(s==="turn"&&state.turn&&state.turn.paused&&state.turn.onPhone))render();
+  if(s==="lobby"||ui.phones||((s==="ready"||s==="roundIntro")&&state.phoneTurns)||(s==="turn"&&state.turn&&state.turn.paused&&state.turn.onPhone)||(s==="turnEnd"&&state.turn&&state.turn.onPhone))render();
 }
 function sendTo(conn,msg){try{if(conn&&conn.open)conn.send(msg)}catch(e){}}
 function broadcast(msg){if(!net.peer||ROLE!=="host")return;net.conns.forEach(c=>sendTo(c.conn,msg))}
@@ -978,7 +1017,7 @@ function hostConfig(){
   const taken=[];
   if(state.lobby)Object.values(state.lobby.players).forEach(p=>taken.push(...p.picks));
   const L=state.lobby||{};
-  return {t:"config",gid:L.gid||null,per:L.per||10,customs:L.customs!=null?L.customs:2,cats:state.settings.cats,taken:taken.slice(0,120)};
+  return {t:"config",gid:L.gid||null,per:L.per||10,customs:L.customs!=null?L.customs:2,cats:state.settings.cats,taken:taken.slice(0,120),teams:lobbyTeams()};
 }
 function tickMsg(pid){
   const m=baseTick(pid);
@@ -991,14 +1030,17 @@ function adminInfo(){
   const a={screen:s,round:state.round||1};
   if(s==="lobby"&&L){
     a.lobby={per:L.per,customs:L.customs,giverPhones:!!L.giverPhones,n:lobbyDeck().length,teams:lobbyTeams(),
-      players:Object.entries(L.players).map(([pid,p])=>({pid,name:p.name||"…",team:p.team||0,ready:!!p.ready,n:p.n||0,online:!!p.online}))};
+      players:Object.entries(L.players).map(([pid,p])=>({pid,name:p.name||"…",team:p.team||0,ready:!!p.ready,n:p.n||0,online:!!p.online,locked:!!p.locked}))};
   }
   if(state.teams){a.team=(state.teams[state.teamIdx]||{}).name;a.scores=state.teams.map((x,i)=>({name:x.name,color:x.color,total:total(i)}))}
   if((s==="roundIntro"||s==="ready")&&g)a.canTablet=true;
   if((s==="roundIntro"||s==="ready")&&!g)a.tabletGo=true;
   if(s==="lobby"&&L&&L.giverPhones)a.lobby.emptyTeams=emptyLobbyTeams();
   if(s==="turn"&&t){a.paused=!!t.paused;a.onPhone=!!t.onPhone;a.giverOnline=!!(t.giver&&pidOnline(t.giver))}
-  if(s==="turnEnd"&&t)a.rows=t.rows.map(r=>({w:state.deck[r.i].w,ok:r.ok,last:!!r.last}));
+  // Phone turn: the words stay private to the player's phone, the admin only sees who is checking.
+  if(s==="turnEnd"&&t&&t.onPhone){a.recapBy=state.roster[t.giver]?state.roster[t.giver].name:"";a.giverOnline=pidOnline(t.giver);a.pts=t.rows.filter(r=>r.ok).length}
+  else if(s==="turnEnd"&&t)a.rows=t.rows.map(r=>({w:state.deck[r.i].w,ok:r.ok,last:!!r.last}));
+  if((s==="ready"||s==="roundEnd")&&state.undo&&state.teams[state.undo.teamIdx])a.undo={team:state.teams[state.undo.teamIdx].name,pts:state.undo.turn.rows.filter(r=>r.ok).length};
   return a;
 }
 function emptyLobbyTeams(){
@@ -1006,14 +1048,18 @@ function emptyLobbyTeams(){
   Object.values(state.lobby.players).forEach(p=>{if(p.name&&n[p.team||0]!=null)n[p.team||0]++});
   return lobbyTeams().filter((_,i)=>!n[i]).map(t=>t.name);
 }
-const ADMIN_ACTS={lobby:["per","customs","giverMode","pteam","kick","lobbyStart"],roundIntro:["goTablet","go"],ready:["goTablet","go"],
-  turn:["pause","resume","takeoverTablet"],turnEnd:["toggleRow","confirmTurn"],roundEnd:["nextRound"],gameEnd:["rematch","newGame"]};
+const ADMIN_ACTS={lobby:["per","customs","giverMode","pteam","kick","lobbyStart","rename","lock"],roundIntro:["goTablet","go"],ready:["goTablet","go","undoTurn"],
+  turn:["pause","resume","takeoverTablet"],turnEnd:["toggleRow","confirmTurn","recapTablet"],roundEnd:["nextRound","undoTurn"],gameEnd:["rematch","newGame"]};
 function adminAct(pid,d){
   if(!pid||pid!==state.admin)return;
   const s=state.screen,a=String(d.a||"");
   if(a==="quit"){if(s!=="setup"&&s!=="lobby")resetGame();return}
   if(!(ADMIN_ACTS[s]||[]).includes(a))return;
   if(a==="takeoverTablet"&&!(state.turn&&state.turn.paused))return;
+  // On a phone turn the recap belongs to the player's phone: the admin can't correct it blind.
+  if((a==="toggleRow"||a==="confirmTurn")&&state.turn&&state.turn.onPhone)return;
+  if(a==="recapTablet"&&!(state.turn&&state.turn.onPhone&&!pidOnline(state.turn.giver)))return;
+  if(a==="rename"){renamePlayer(cleanStr(d.target,40),d.name);return}
   hostAct(a,{dataset:{v:d.v==null?"":String(d.v),pid:cleanStr(d.target,40),i:d.i==null?"":String(d.i)}});
 }
 function baseTick(pid){
@@ -1022,7 +1068,7 @@ function baseTick(pid){
   const m={t:"tick",phase,screen:s};
   if(phase==="lobby"){
     const L=state.lobby,p=L&&pid&&L.players[pid];
-    if(s==="lobby"&&L&&p){const tm=lobbyTeams()[p.team||0];if(tm)m.myTeam=tm}
+    if(s==="lobby"&&L&&p){const tm=lobbyTeams()[p.team||0];if(tm)m.myTeam=tm;m.myName=p.name;m.locked=!!p.locked;m.renamed=!!p.renamed}
     return m;
   }
   if(!state.teams)return m;
@@ -1035,11 +1081,17 @@ function baseTick(pid){
     cardsLeft:(state.pile?state.pile.length:0)+(t?t.rows.filter(r=>!r.ok).length:0),
     last:lastTurnInfo(),
     giverName:readerName(),
+    // Live count of cards found this turn, so every phone can pop a "+1" the moment one is validated.
+    turnNo:state.turnNo||0,found:(s==="turn"&&t)?t.rows.filter(r=>r.ok).length:null,
     scores:state.teams.map((x,i)=>({name:x.name,color:x.color,total:total(i)}))});
-  // Only the player holding the cards ever receives the word.
+  // Only the player holding the cards ever receives the words.
   if(pid&&giver===pid){
     m.me=true;
     if(s==="turn"&&t&&t.onPhone&&t.giver===pid&&state.pile.length){m.card=state.deck[state.pile[0]].w;m.seq=t.seq;m.paused=t.paused}
+    if(s==="turnEnd"&&t&&t.onPhone&&t.giver===pid){
+      m.rows=t.rows.map(r=>({w:state.deck[r.i].w,ok:r.ok,last:!!r.last}));
+      m.title=t.reason==="time"?"Temps écoulé !":(t.rows.some(r=>!r.ok)?"Plus de cartes pour ce tour !":"Plus de cartes !");
+    }
   }
   return m;
 }
@@ -1048,7 +1100,9 @@ function handleAct(pid,d){
   const s=state.screen,t=state.turn;
   if(d.a==="go"&&(s==="roundIntro"||s==="ready"))startTurn();
   else if((d.a==="found"||d.a==="pass")&&s==="turn"&&t&&t.onPhone&&!t.paused&&d.seq===t.seq)(d.a==="found"?doFound:doPass)();
-  // Corrections and validation at the end of a turn happen on the tablet only.
+  // Phone turn: only that player's phone corrects and validates its own recap (nobody else sees the words).
+  else if(d.a==="toggle"&&s==="turnEnd"&&t&&t.onPhone&&t.giver===pid&&t.rows[+d.i]){t.rows[+d.i].ok=!t.rows[+d.i].ok;render()}
+  else if(d.a==="confirm"&&s==="turnEnd"&&t&&t.onPhone&&t.giver===pid)confirmTurn();
 }
 function onHostData(conn,d){
   if(!d||typeof d!=="object")return;
@@ -1063,8 +1117,11 @@ function onHostData(conn,d){
   if(d.t==="hello"&&!L.players[pid])return;
   const p=L.players[pid]||(L.players[pid]={name:"",picks:[],custom:[],ready:false,n:0,team:emptiestTeam()});
   p.online=true;
-  const name=cleanStr(d.name,24);if(name)p.name=name;
+  // A name set by the admin, or a locked player, can't be changed from the player's phone.
+  const name=cleanStr(d.name,24);if(name&&!p.locked&&!p.renamed)p.name=name;
   if(d.t==="progress"){p.n=Math.max(0,Math.min(+d.n||0,99));p.ready=false}
+  // Each player picks their own team from their phone (the tablet and the admin can still move them).
+  if(d.t==="team"&&!p.locked){const i=Math.floor(+d.team);if(i>=0&&i<lobbyTeams().length)p.team=i}
   if(d.t==="words"){p.picks=cleanArr(d.picks,12,60);p.custom=cleanArr(d.custom,3,60);p.n=p.picks.length;p.ready=true}
   save();broadcast(hostConfig());rerenderNet();broadcastTick();
 }
@@ -1113,18 +1170,35 @@ function startGame(deckOverride){
   if(deckOverride&&L)Object.entries(L.players).forEach(([pid,p])=>{if(!p.name)return;roster[pid]={name:p.name};(teams[p.team||0]||teams[0]).players.push(pid)});
   Object.assign(state,{screen:"roundIntro",teams,deck,pile:shuffle(deck.map((_,i)=>i)),round:1,
     teamIdx:Math.floor(Math.random()*teams.length),scores:teams.map(()=>[0,0,0]),turn:null,duration:s.duration,
-    phoneTurns,roster,giverIdx:teams.map(()=>0),lastTurn:null});
+    phoneTurns,roster,giverIdx:teams.map(()=>0),lastTurn:null,undo:null,turnNo:0});
   window.scrollTo(0,0);render();
 }
 function startTurn(forceTablet){
   const ms=state.duration*1000,g=giverOf();
+  state.turnNo=(state.turnNo||0)+1;state.undo=null;
   state.turn={rows:[],left:ms,endsAt:Date.now()+ms,paused:false,reason:null,seq:0,giver:g,onPhone:!forceTablet&&!!(g&&pidOnline(g))};
   state.screen="turn";lastSec=null;ui.confirmTablet=false;
   sfx.go();wake();render();
 }
+/* Admin renames a player: that name wins over whatever their phone sends */
+function renamePlayer(pid,raw){
+  const p=state.lobby&&state.lobby.players[pid],name=cleanStr(raw,24);
+  if(!p||!name)return;
+  p.name=name;p.renamed=true;save();render();broadcastTick();
+}
+/* "+1" that floats up and fades: on phones and on the tablet's shared screen */
+function popPlus(n,color){
+  try{
+    const el=document.createElement("div");
+    el.className="plus-pop";el.textContent="+"+n;el.style.setProperty("--team",color||"var(--mint)");
+    el.style.marginLeft=(Math.round(Math.random()*60)-30)+"px";
+    document.body.appendChild(el);setTimeout(()=>el.remove(),1600);
+  }catch(e){}
+}
 function doFound(){
   const t=state.turn;if(!t||t.paused)return;
   const idx=state.pile.shift();setRow(idx,true);t.seq++;sfx.found();
+  if(t.onPhone)popPlus(1,state.teams[state.teamIdx].color);
   if(!state.pile.length)endTurn("empty");else render();
 }
 function doPass(){
@@ -1145,6 +1219,8 @@ function endTurn(reason){
 }
 function confirmTurn(){
   const t=state.turn;let pts=0;ui.confirmTablet=false;
+  // Snapshot so a too-quick "Valider" can be undone until the next turn starts.
+  state.undo=JSON.parse(JSON.stringify({pile:state.pile,scores:state.scores,lastTurn:state.lastTurn||null,giverIdx:state.giverIdx||null,teamIdx:state.teamIdx,turn:t}));
   t.rows.forEach(r=>{
     if(r.ok){state.pile=state.pile.filter(x=>x!==r.i);pts++}
     else if(!state.pile.includes(r.i))state.pile.push(r.i);
@@ -1157,6 +1233,17 @@ function confirmTurn(){
   state.turn=null;
   state.screen=state.pile.length?"ready":"roundEnd";
   window.scrollTo(0,0);render();
+}
+/* Back to the recap of the turn just validated (only until the next turn or round starts) */
+function undoTurn(){
+  const u=state.undo;if(!u||!(state.screen==="ready"||state.screen==="roundEnd"))return;
+  Object.assign(state,{pile:u.pile,scores:u.scores,lastTurn:u.lastTurn,giverIdx:u.giverIdx,teamIdx:u.teamIdx,turn:u.turn,undo:null,screen:"turnEnd"});
+  ui.confirmTablet=false;window.scrollTo(0,0);render();
+}
+function undoLink(){
+  const u=state.undo;if(!u||!state.teams[u.teamIdx])return "";
+  const pts=u.turn.rows.filter(r=>r.ok).length;
+  return `<button class="btn btn-ghost small undo-btn" data-act="undoTurn">↶ Corriger le tour de ${esc(state.teams[u.teamIdx].name)} (+${pts})</button>`;
 }
 function resetGame(){
   state={screen:"setup",settings:state.settings,code:state.code,online:state.online,admin:state.admin};
@@ -1216,16 +1303,19 @@ function hostAct(act,el){
     case "takeoverTablet":if(state.turn){state.turn.onPhone=false;ui.confirmTablet=false;render()}break;
     case "giverMode":state.lobby.giverPhones=s.lobbyGiverPhones=el.dataset.v==="1";render();broadcastTick();break;
     case "pteam":{const p=state.lobby.players[el.dataset.pid];if(p){p.team=((p.team||0)+1)%lobbyTeams().length;render();broadcastTick()}break}
+    case "lock":{const p=state.lobby&&state.lobby.players[el.dataset.pid];if(p){p.locked=!p.locked;render();broadcastTick()}break}
     case "pause":pauseTurn();render();break;
     case "resume":resumeTurn();render();break;
     case "toggleRow":{const r=state.turn&&state.turn.rows[+el.dataset.i];if(r){r.ok=!r.ok;render()}break}
     case "confirmTurn":confirmTurn();break;
+    case "undoTurn":undoTurn();break;
+    case "recapTablet":if(state.turn){state.turn.onPhone=false;ui.confirmTablet=false;render()}break;
     case "nextRound":
-      ui.confirmTablet=false;
+      ui.confirmTablet=false;state.undo=null;
       if(state.round>=3){state.screen="gameEnd";render();break}
       state.round++;state.pile=shuffle(state.deck.map((_,i)=>i));state.screen="roundIntro";window.scrollTo(0,0);render();break;
     case "rematch":
-      state.lastTurn=null;
+      state.lastTurn=null;state.undo=null;
       state.round=1;state.scores=state.teams.map(()=>[0,0,0]);state.pile=shuffle(state.deck.map((_,i)=>i));
       state.teamIdx=Math.floor(Math.random()*state.teams.length);state.screen="roundIntro";render();break;
     case "newGame":resetGame();break;
@@ -1270,12 +1360,24 @@ function finishPicks(){
 }
 function sendWords(){psend({t:"words",picks:ph.picks,custom:ph.custom.filter(Boolean).slice(0,nCustoms())})}
 
+/* Waiting screen: the player taps the team they want to join */
+function teamPicker(){
+  const teams=pn.config&&pn.config.teams,mine=pn.tick&&pn.tick.myTeam;
+  if(!teams||!teams.length||pn.status!=="on")return "";
+  const t=pn.tick||{},nameLine=t.myName?`<p class="lead">Tu joues sous le nom <b>${esc(t.myName)}</b></p>`:"";
+  // Locked by the admin: show the team, no buttons.
+  if(t.locked)return `${nameLine}<p class="lead">${ICON.lock.replace("<svg",'<svg style="width:16px;height:16px;vertical-align:-2px"')} L'admin a verrouillé ton nom et ton équipe</p>
+    ${mine?`<div class="team-pick"><span class="tp on" style="--team:${esc(mine.color)};text-align:center;display:grid;place-items:center">${esc(mine.name)}</span></div>`:""}`;
+  return `${nameLine}<p class="lead">Ton équipe : touche celle que tu veux rejoindre</p>
+    <div class="team-pick">${teams.map((x,i)=>`<button class="tp ${mine&&mine.name===x.name?"on":""}" style="--team:${esc(x.color)}" data-act="pTeam" data-i="${i}" aria-pressed="${!!(mine&&mine.name===x.name)}">${esc(x.name)}</button>`).join("")}</div>`;
+}
 function phoneView(){
   if(ROLE==="chrono")return "chrono";
   const t=pn.tick;
   if(t&&t.phase==="game"&&t.me){
     if(t.screen==="roundIntro"||t.screen==="ready")return "giver";
     if(t.screen==="turn"&&t.card)return "giver";
+    if(t.screen==="turnEnd"&&t.rows)return "giver";
   }
   if(t&&t.phase!=="lobby")return "chrono";
   if(t&&t.screen==="setup")return "wait";
@@ -1332,7 +1434,7 @@ function vPhone(){
     body=`<div class="phone-main">
       <div class="done-mark">${ICON.ok}</div>
       <h1>C'est envoyé !</h1>
-      ${pn.tick&&pn.tick.myTeam?`<p class="lead">Tu joues avec</p><span class="pill" style="--team:${esc(pn.tick.myTeam.color)};background:var(--team);color:var(--ink);font-family:var(--display);font-size:1.6rem;padding:6px 18px;border-radius:999px;align-self:center">${esc(pn.tick.myTeam.name)}</span>`:""}
+      ${teamPicker()}
       <p class="lead">${pn.status==="on"?"Attends que la tablette lance la partie.":"Tes cartes partiront dès que la connexion revient."}</p>
       <div class="mini-list">${ph.picks.concat(ph.custom.filter(Boolean)).map(w=>`<span>${esc(w)}</span>`).join("")}</div>
       <button class="btn btn-ghost small" data-act="pRestart">Refaire mes choix</button>
@@ -1382,6 +1484,17 @@ function vGiver(){
       ${t.paused?`<div class="pause-layer"><h2>Pause</h2><p class="hint">Le chrono est arrêté sur la tablette.</p></div>`:""}
     </div>`;
   }
+  if(t.screen==="turnEnd"&&t.rows){
+    // Private recap: only this phone sees the words, found or not.
+    const pts=t.rows.filter(r=>r.ok).length;
+    return `<div class="phone"><div class="phone-main">
+      <h1>${esc(t.title||"Fin du tour")}</h1>
+      <p class="recap-head"><b>+${plural(pts,"point")}</b> pour ${esc(t.team)}</p>
+      ${t.rows.length?`<div class="recap">${t.rows.map((r,i)=>`<button class="tr ${r.ok?"is-ok":(r.last?"is-last":"is-no")}" data-act="gToggle" data-i="${i}"><span>${esc(r.w)}</span><i>${r.ok||r.last?ICON.ok:ICON.no}</i></button>`).join("")}</div>
+      <p class="hint">Touche une carte pour corriger. Les cartes non trouvées ne sont visibles que sur ton téléphone.</p>`:`<p class="lead">Aucune carte ce tour-ci.</p>`}
+      <button class="btn btn-sun wide" data-act="gConfirm">Valider</button>
+    </div></div>`;
+  }
   return `<div class="phone">${pStatus()}<div class="phone-main">
     <p class="rt" style="font-family:var(--display);font-size:1.5rem;color:var(--sun)">Manche ${t.round} · ${esc(t.roundTitle)}</p>
     <h1>C'est toi qui fais deviner !</h1>
@@ -1397,7 +1510,14 @@ function renderAdmin(){
   if(!a){box.innerHTML="";pAdm.open=false;return}
   // Hidden while this phone shows the cards, so it never covers them.
   const giving=phoneView()==="giver"&&pn.tick.screen==="turn";
+  // Keep what the admin is typing (and the scroll) when the panel refreshes.
+  const inp=document.getElementById("adm-name"),typed=inp?{v:inp.value,s:inp.selectionStart,f:document.activeElement===inp}:null;
+  const sh=box.querySelector(".overlay"),scroll=sh?sh.scrollTop:0;
   box.innerHTML=(giving||pAdm.open?"":`<button class="adm-fab" data-act="admOpen">${ICON.crown}Admin</button>`)+(pAdm.open?vAdminPanel(a):"");
+  const ov=box.querySelector(".overlay");if(ov)ov.scrollTop=scroll;
+  const ni=document.getElementById("adm-name");
+  if(ni&&typed){ni.value=typed.v;if(typed.f){ni.focus();try{ni.setSelectionRange(typed.s,typed.s)}catch(e){}}}
+  else if(ni&&pAdm.focusEdit){pAdm.focusEdit=false;ni.focus();ni.select()}
 }
 function aBtn(a,label,cls){return `<button class="btn ${cls||"btn-ghost"} wide" data-act="adm" data-a="${a}">${label}</button>`}
 function aConfirm(key,a,label,warn){
@@ -1418,12 +1538,16 @@ function vAdminPanel(a){
       <h3>Joueurs</h3>
       <ul class="adm-players">${L.players.map(p=>{
         const tm=L.teams[p.team]||L.teams[0],armed=pAdm.arm==="k"+p.pid;
-        return `<li class="${p.ready?"ready":""}"><span class="pdot ${p.online?"on":""}"></span><b>${esc(p.name)}</b>
-          <button class="adm-team" style="--team:${esc(tm.color)}" data-act="adm" data-a="pteam" data-pid="${esc(p.pid)}">${esc(tm.name)}</button>
-          <span class="st">${p.ready?"✓":p.n+"/"+L.per}</span>
-          <button class="adm-kick ${armed?"arm":""}" data-act="${armed?"adm":"admArm"}" data-a="kick" data-pid="${esc(p.pid)}" data-k="k${esc(p.pid)}">${armed?"Retirer ?":"✕"}</button></li>`;
+        if(pAdm.edit===p.pid)return `<li class="editing"><input id="adm-name" class="field" maxlength="24" value="${esc(p.name)}" autocomplete="off" aria-label="Nouveau nom">
+          <button class="btn btn-sun small" data-act="admRenameOk" data-pid="${esc(p.pid)}">OK</button><button class="adm-kick" data-act="admRenameCancel">Annuler</button></li>`;
+        return `<li class="${p.ready?"ready":""}">
+          <div class="adm-row"><span class="pdot ${p.online?"on":""}"></span><b>${esc(p.name)}</b><span class="st">${p.ready?"✓":p.n+"/"+L.per}</span>
+            <button class="adm-ico" data-act="admRename" data-pid="${esc(p.pid)}" aria-label="Renommer ${esc(p.name)}">${ICON.pen}</button>
+            <button class="adm-ico ${p.locked?"on":""}" data-act="adm" data-a="lock" data-pid="${esc(p.pid)}" aria-label="${p.locked?"Déverrouiller":"Verrouiller"} ${esc(p.name)}">${p.locked?ICON.lock:ICON.unlock}</button></div>
+          <div class="adm-row"><button class="adm-team" style="--team:${esc(tm.color)}" data-act="adm" data-a="pteam" data-pid="${esc(p.pid)}">${esc(tm.name)}</button>
+            <button class="adm-kick ${armed?"arm":""}" data-act="${armed?"adm":"admArm"}" data-a="kick" data-pid="${esc(p.pid)}" data-k="k${esc(p.pid)}">${armed?"Retirer ?":"Retirer"}</button></div></li>`;
       }).join("")||`<li>Personne pour l'instant</li>`}</ul>
-      <p class="hint">Touche l'équipe d'un joueur pour le changer d'équipe.</p>
+      <p class="hint">Touche l'équipe d'un joueur pour le changer d'équipe. Le crayon renomme, le cadenas bloque son nom et son équipe sur son téléphone.</p>
       ${L.emptyTeams&&L.emptyTeams.length?`<p class="who warn">${L.emptyTeams.map(esc).join(", ")} : aucun joueur, ses tours se joueront sur la tablette.</p>`:""}
       <button class="btn btn-sun wide" data-act="adm" data-a="lobbyStart" ${L.n<5?"disabled":""}>Lancer la partie · ${plural(L.n,"carte")}</button>
     </div>`;
@@ -1434,6 +1558,9 @@ function vAdminPanel(a){
     if(s==="turn")body+=a.paused
       ?aBtn("resume","Reprendre","btn-sun")+(a.onPhone&&!a.giverOnline?aConfirm("take","takeoverTablet","Jouer ce tour sur la tablette","Les cartes vont s'afficher sur la tablette, tout le monde pourra les voir."):"")
       :aBtn("pause","Pause","btn-sun");
+    if(s==="turnEnd"&&a.recapBy!=null)body+=`<p class="lead"><b>+${plural(a.pts||0,"point")}</b> · ${esc(a.recapBy)} vérifie les cartes sur son téléphone.</p>`
+      +(a.giverOnline?"":aConfirm("recap","recapTablet","Vérifier les cartes sur la tablette","Les cartes vont s'afficher sur la tablette, tout le monde pourra les voir."));
+    if((s==="ready"||s==="roundEnd")&&a.undo)body+=aBtn("undoTurn",`↶ Corriger le tour de ${esc(a.undo.team)} (+${a.undo.pts})`);
     if(s==="turnEnd"&&a.rows)body+=`<div class="recap">${a.rows.map((r,i)=>`<button class="tr ${r.ok?"is-ok":(r.last?"is-last":"is-no")}" data-act="adm" data-a="toggleRow" data-i="${i}"><span>${esc(r.w)}</span><i>${r.ok||r.last?ICON.ok:ICON.no}</i></button>`).join("")||`<p class="lead">Aucune carte ce tour-ci.</p>`}</div>
       <p class="hint">Touche une carte pour corriger.</p>`+aBtn("confirmTurn",`Valider · +${plural(a.rows.filter(r=>r.ok).length,"point")}`,"btn-sun");
     if(s==="roundEnd")body+=aBtn("nextRound",a.round<3?"Manche suivante":"Résultat final","btn-sun");
@@ -1476,7 +1603,7 @@ function onPhoneData(d){
       return;
     }
     if(ph.step==="pick"&&ph.picks.length>=perPlayer()){finishPicks();psave();prender();return}
-    if(before!==phoneView()){prender();return}
+    if(before!==phoneView()||phoneView()==="sent"){prender();return}
     if(ph.pair&&((d.taken||[]).map(w=>String(w).toLowerCase()).some(w=>w===String(ph.pair[0]).toLowerCase()||w===String(ph.pair[1]).toLowerCase()))){newPair();if(phoneView()==="pick")prender()}
     if(phoneView()==="pick")prender();
     return;
@@ -1485,13 +1612,20 @@ function onPhoneData(d){
     const before=phoneView();
     if(pn.wasRunning&&d.screen==="turnEnd"&&d.reason==="time")sfx.buzz();
     pn.wasRunning=d.screen==="turn"&&d.running;
+    // "+1" each time the playing team gets a card (not on the phone that holds the cards, it already knows).
+    if(d.screen==="turn"&&d.found!=null){
+      if(pn.plusTurn===d.turnNo&&d.found>(pn.plusFound||0)&&!d.card){popPlus(d.found-(pn.plusFound||0),d.color);if(phoneAudio)sfx.found()}
+      pn.plusTurn=d.turnNo;pn.plusFound=d.found;
+    }
+    // The admin renamed this player: the phone takes that name so it never sends the old one back.
+    if(d.myName&&d.renamed&&ph.name!==d.myName){ph.name=d.myName;psave()}
     pn.tick=d;pn.tickAt=Date.now();
     const admSig=JSON.stringify(d.adm||null);
     if(admSig!==pn.admSig){pn.admSig=admSig;renderAdmin()}
     const after=phoneView();
     // Re-render only when something visible changed (never on the name / pick / custom screens, which hold inputs).
     const live=["chrono","giver","sent","wait"].includes(after);
-    const sig=after+"|"+(live?JSON.stringify([d.screen,d.card,d.seq,d.rows,d.paused,d.cardsLeft,d.running,d.team,d.giverName,d.myTeam&&d.myTeam.name,d.reason,d.phase,d.scores,d.last]):"");
+    const sig=after+"|"+(live?JSON.stringify([d.screen,d.card,d.seq,d.rows,d.paused,d.cardsLeft,d.running,d.team,d.giverName,d.myTeam&&d.myTeam.name,d.reason,d.phase,d.scores,d.last,d.myName,d.locked]):"");
     if(sig!==pn.sig||before!==after){pn.sig=sig;prender()}
     else pUpdateTimer();
   }
@@ -1551,7 +1685,17 @@ function phoneBoot(){
       case "pUndo":ph.step="pick";ph.picks.pop();newPair();psave();psend({t:"progress",n:ph.picks.length});prender();break;
       case "pRestart":ph.step="pick";ph.picks=[];newPair();psave();psend({t:"progress",n:0});prender();break;
       case "pSound":sfx.found();prender();break;
+      case "pTeam":psend({t:"team",team:+el.dataset.i});break;
+      case "gToggle":psend({t:"act",a:"toggle",i:+el.dataset.i});break;
+      case "gConfirm":psend({t:"act",a:"confirm"});break;
       case "admOpen":pAdm.open=true;pAdm.arm=null;renderAdmin();break;
+      case "admRename":pAdm.edit=el.dataset.pid;pAdm.focusEdit=true;renderAdmin();break;
+      case "admRenameCancel":pAdm.edit=null;renderAdmin();break;
+      case "admRenameOk":{
+        const v=cleanStr((document.getElementById("adm-name")||{}).value||"",24);
+        if(v)psend({t:"admin",a:"rename",target:el.dataset.pid,name:v});
+        pAdm.edit=null;renderAdmin();break;
+      }
       case "admClose":pAdm.open=false;pAdm.arm=null;renderAdmin();break;
       case "admArm":pAdm.arm=el.dataset.k;renderAdmin();break;
       case "admDisarm":pAdm.arm=null;renderAdmin();break;
@@ -1573,6 +1717,7 @@ function phoneBoot(){
     }
   });
   document.addEventListener("input",e=>{const m=/^p-c(\d)$/.exec(e.target.id);if(m){ph.custom[+m[1]]=e.target.value;psave()}else if(e.target.id==="p-name"){ph.name=e.target.value;psave()}});
+  document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="adm-name"){e.preventDefault();const ok=document.querySelector("[data-act=admRenameOk]");if(ok)ok.click()}});
   setInterval(()=>{if(phoneView()==="chrono")pUpdateTimer()},100);
   async function lock(){try{if(navigator.wakeLock)await navigator.wakeLock.request("screen")}catch(e){}}
   lock();document.addEventListener("visibilitychange",()=>{if(!document.hidden)lock()});
