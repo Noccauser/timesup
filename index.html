@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<!-- Time's Up Maison · v1.16 -->
+<!-- Time's Up Maison · v1.17 -->
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1B2A8C">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -143,7 +143,12 @@ svg{display:block}
 .lock-btn{flex:none;width:26px;height:26px;border:0;background:none;color:var(--muted);opacity:.45;cursor:pointer;padding:2px}
 .lock-btn.on{opacity:1;color:var(--sun)}
 .lock-btn svg{width:100%;height:100%}
-.undo-btn{align-self:center;opacity:.85}
+/* Discreet on purpose: seen after the main button, not tapped by reflex */
+.undo-btn{align-self:center;display:inline-flex;align-items:center;gap:8px;background:none;border:0;cursor:pointer;color:#8FA2F0;opacity:.75;
+  font:inherit;font-weight:700;font-size:.95rem;padding:10px 12px;margin-top:6px;text-align:left}
+.undo-btn svg{width:20px;height:20px;flex:none}
+.undo-btn small{font-weight:600;opacity:.8;margin-left:4px}
+.undo-btn:active{opacity:1}
 .plus-pop{position:fixed;left:50%;top:34%;z-index:80;pointer-events:none;font-family:var(--display);font-size:clamp(3.4rem,16vw,6rem);line-height:1;
   color:var(--team);-webkit-text-stroke:3px var(--paper);paint-order:stroke fill;text-shadow:0 6px 0 rgba(6,10,50,.45);animation:plus 1.5s cubic-bezier(.2,.9,.3,1) forwards}
 @keyframes plus{0%{transform:translate(-50%,10px) scale(.4);opacity:0}15%{transform:translate(-50%,0) scale(1.15);opacity:1}30%{transform:translate(-50%,-10px) scale(1)}100%{transform:translate(-50%,-110px) scale(1);opacity:0}}
@@ -273,6 +278,38 @@ textarea.field{min-height:130px;padding:12px 14px;resize:vertical;line-height:1.
 .avail{color:var(--muted);font-size:.95rem;font-variant-numeric:tabular-nums}
 .err{background:var(--tomato);color:#fff;border-radius:14px;padding:12px 16px;font-weight:700}
 .start{min-height:76px;font-size:1.8rem;width:100%}
+.setup .topbar .t-label{flex:1;text-align:center}
+/* Welcome */
+.home{flex:1;width:100%;max-width:760px;margin:0 auto;display:flex;flex-direction:column;justify-content:space-between;align-items:center;gap:28px;text-align:center;padding-block:clamp(8px,4vh,48px)}
+.home-main{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:22px}
+.home-logo .logo-main{font-size:clamp(3.8rem,15vw,7.5rem)}
+.home-logo .stamp{font-size:clamp(1.15rem,3.6vw,1.6rem);right:-10px;bottom:-16px}
+.home .tagline{margin-top:14px;font-size:clamp(1.05rem,3vw,1.25rem);max-width:32ch}
+.home-cards{position:relative;width:min(80vw,380px);height:clamp(110px,18vh,170px);margin-bottom:6px}
+.hc{position:absolute;left:50%;top:50%;width:clamp(120px,30vw,160px);aspect-ratio:3/4;max-height:100%;background:var(--paper);color:var(--ink);border-radius:14px;
+  box-shadow:0 6px 0 rgba(6,10,50,.4);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-family:var(--display);font-size:clamp(.9rem,2.6vw,1.1rem);padding:8px;line-height:1.1;
+  transform:translate(-50%,-50%) rotate(var(--r)) translateX(var(--x));animation:hcbob 3.2s ease-in-out infinite alternate;animation-delay:var(--d)}
+.hc i{font-style:normal;width:30px;height:30px;border-radius:50%;background:var(--c);color:var(--ink);display:grid;place-items:center;font-size:1rem}
+.hc1{--r:-12deg;--x:-84%;--c:var(--sun);--d:0s}
+.hc2{--r:0deg;--x:0%;--c:var(--mint);--d:.4s;z-index:1}
+.hc3{--r:12deg;--x:84%;--c:var(--tomato);--d:.8s}
+@keyframes hcbob{from{margin-top:0}to{margin-top:-8px}}
+.home-actions{width:100%;max-width:440px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.home-play{width:100%;min-height:92px;font-size:clamp(2.2rem,7vw,2.8rem);border-radius:26px}
+/* Card source choice */
+.src-pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.src{border:2px solid var(--line);background:rgba(255,255,255,.05);color:var(--fg);border-radius:16px;padding:14px 16px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:4px;font:inherit}
+.src b{font-weight:800;font-size:1.05rem}
+.src span{color:var(--muted);font-size:.92rem;line-height:1.35}
+.src.on{border-color:var(--sun);background:rgba(255,201,60,.12);box-shadow:inset 0 0 0 1px var(--sun)}
+/* Folded settings */
+.fold{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;background:none;border:0;color:var(--fg);cursor:pointer;padding:0;text-align:left;font:inherit}
+.fold span{display:flex;flex-direction:column;gap:2px;min-width:0}
+.fold b{font-weight:800;font-size:.8rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
+.fold small{font-size:1rem;font-weight:700;color:var(--fg)}
+.fold i{font-style:normal;flex:none;background:rgba(255,255,255,.1);border-radius:999px;padding:8px 14px;font-weight:700;font-size:.9rem}
+.fold-body{display:flex;flex-direction:column;gap:16px;border-top:1px solid var(--line);padding-top:16px}
+@media (prefers-reduced-motion:reduce){.hc{animation:none}}
 
 /* Shared */
 .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -427,7 +464,7 @@ textarea.field{min-height:130px;padding:12px 14px;resize:vertical;line-height:1.
 
 <div id="app"></div>
 <div id="adm"></div>
-<div class="ver" id="ver" aria-hidden="true">v1.16</div>
+<div class="ver" id="ver" aria-hidden="true">v1.17</div>
 
 <script>
 (function(){
@@ -459,6 +496,7 @@ function makeCode(){const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";let s="";for(let 
 const ICON={
   ok:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12.8l4.6 4.6L19.5 6.8" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   no:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/></svg>',
+  undo:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/></svg>',
   pen:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1.2-4.6L15.8 4.8a2 2 0 0 1 2.8 0l.6.6a2 2 0 0 1 0 2.8L8.6 18.8z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/></svg>',
   lock:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2.5" fill="currentColor"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" fill="none" stroke="currentColor" stroke-width="2.6"/></svg>',
   unlock:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M8 10.5V8a4 4 0 0 1 7.6-1.7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>',
@@ -466,7 +504,14 @@ const ICON={
   crown:'<svg viewBox="0 0 66 46" aria-hidden="true"><path d="M7 40 4 11l15 13L33 4l14 20 15-13-3 29z" fill="#FFC93C" stroke="#141A3A" stroke-width="3.5" stroke-linejoin="round"/><circle cx="4" cy="11" r="3.5" fill="#FFC93C" stroke="#141A3A" stroke-width="2.5"/><circle cx="33" cy="4" r="3.5" fill="#FFC93C" stroke="#141A3A" stroke-width="2.5"/><circle cx="62" cy="11" r="3.5" fill="#FFC93C" stroke="#141A3A" stroke-width="2.5"/><path d="M10 33h46" stroke="#141A3A" stroke-width="3" stroke-linecap="round"/></svg>'
 };
 const COLORS=["#FF6B57","#FFC93C","#3DDC97","#FF8AD1","#6FD3FF","#B79CFF"];
-const TEAM_NAMES=["Les Raclettes","Les Fondues","Les Röstis","Les Cervelas","Les Toblerones","Les Ovos"];
+/* Default team names follow their colour. Old default names get migrated. */
+const TEAM_DEFS=[["Équipe rouge","#FF6B57"],["Équipe verte","#3DDC97"],["Équipe jaune","#FFC93C"],["Équipe rose","#FF8AD1"],["Équipe bleue","#6FD3FF"],["Équipe violette","#B79CFF"]];
+const OLD_NAMES=["Les Raclettes","Les Fondues","Les Röstis","Les Cervelas","Les Toblerones","Les Ovos"];
+function colorName(c){const d=TEAM_DEFS.find(x=>x[1]===c);return d?d[0]:"Équipe"}
+function isAutoName(n){n=String(n||"").trim();return !n||TEAM_DEFS.some(d=>d[0]===n)||OLD_NAMES.includes(n)||/^Équipe \d+$/.test(n)}
+function defaultTeams(){return TEAM_DEFS.slice(0,2).map(d=>({name:d[0],color:d[1]}))}
+// After this long without using the app, team names go back to the defaults (a new evening).
+const STALE_MS=8*3600*1000;
 
 const CATS={celeb:"Célébrités",persos:"Personnages",trucs:"Trucs & situations",lieux:"Lieux",suisse:"Spécial Suisse",hard:"Hardcore 18+"};
 const WORDS={
@@ -485,10 +530,10 @@ const ROUNDS=[
 ];
 
 function defaults(){
-  return {teams:[{name:TEAM_NAMES[0],color:COLORS[0]},{name:TEAM_NAMES[1],color:COLORS[2]}],
+  return {teams:defaultTeams(),
     cardCount:40,duration:30,cats:["celeb","persos","trucs","lieux"],custom:"",customOnly:false,sound:true,phones:false};
 }
-function initial(){return {screen:"setup",settings:defaults()}}
+function initial(){return {screen:"home",settings:defaults()}}
 
 let state, ui={menu:false,rules:false,confirmQuit:false,err:"",shake:false};
 const app=document.getElementById("app");
@@ -504,7 +549,7 @@ function parseCustom(txt){
 }
 // A tablet tab that handed over to another tab of the same device stops saving, so it can't overwrite the live game.
 let yielded=false;
-function save(){if(!yielded)store.set(KEY,state)}
+function save(){if(yielded)return;if(state&&state.settings)state.settings.seenAt=Date.now();store.set(KEY,state)}
 function total(i){return state.scores[i].reduce((a,b)=>a+b,0)}
 
 /* ---------- sound ---------- */
@@ -566,7 +611,7 @@ function availText(){
 
 /* ---------- views ---------- */
 function topbar(label){
-  const warn=ui.codeChanged&&state.screen!=="lobby"?`<button class="link-btn" style="color:var(--sun);padding:4px" data-act="phones">Nouveau code de salle : les téléphones doivent rescanner</button>`:"";
+  const warn=ui.codeChanged&&state.lobby&&state.screen!=="lobby"?`<button class="link-btn" style="color:var(--sun);padding:4px" data-act="phones">Nouveau code de salle : les téléphones doivent rescanner</button>`:"";
   return `<div class="topbar"><span class="t-label">${label}</span>${warn}<button class="icon-btn" data-act="menu">Menu</button></div>`;
 }
 function board(){
@@ -584,14 +629,36 @@ function board(){
 }
 function seg(group,val,on,label){return `<button data-act="${group}" data-v="${val}" aria-pressed="${on}">${label}</button>`}
 
+/* Welcome screen: the logo, the three rounds as cards, one big Play button */
+function vHome(){
+  return `<div class="home">
+    <div class="home-main">
+      <div class="home-cards" aria-hidden="true">
+        <span class="hc hc1"><i>1</i>Décrivez !</span><span class="hc hc2"><i>2</i>Un seul mot !</span><span class="hc hc3"><i>3</i>Mimez !</span>
+      </div>
+      <div class="logo home-logo"><span class="logo-main">Time's Up</span><span class="stamp">maison</span></div>
+      <p class="tagline">Faites deviner un max de cartes à votre équipe, en 3 manches.</p>
+    </div>
+    <div class="home-actions">
+      <button class="btn btn-sun home-play" data-act="toSetup">Jouer</button>
+      <button class="link-btn" data-act="rules">Les règles</button>
+    </div>
+  </div>`;
+}
+function settingsSummary(){
+  const s=state.settings,n=s.cats.length,c=parseCustom(s.custom).length;
+  const parts=[];
+  if(!(ONLINE&&s.phones))parts.push(s.cardCount+" cartes");
+  parts.push(s.duration+" s par tour");
+  parts.push(plural(n,"thème")+(s.cats.includes("hard")?" (18+)":""));
+  if(c)parts.push(c>1?c+" mots perso":"1 mot perso");
+  return parts.join(" · ");
+}
+/* Getting ready: teams, where the cards come from, then the settings folded away */
 function vSetup(){
-  const s=state.settings;
+  const s=state.settings,phones=ONLINE&&s.phones;
   return `<div class="setup">
-  <header class="hero">
-    <div class="logo"><span class="logo-main">Time's Up</span><span class="stamp">maison</span></div>
-    <p class="tagline">Les mêmes cartes pendant 3 manches : on décrit, puis un seul mot, puis on mime. Chaque carte trouvée rapporte un point.</p>
-    <button class="btn btn-ghost small" data-act="rules">Lire les règles</button>
-  </header>
+  <div class="topbar"><button class="icon-btn" data-act="toHome">← Accueil</button><span class="t-label">Préparer la partie</span><button class="icon-btn" data-act="rules">Règles</button></div>
   <section class="panel">
     <h2>Équipes</h2>
     <div class="teams">${s.teams.map((t,i)=>`<div class="team-row">
@@ -601,25 +668,30 @@ function vSetup(){
     </div>`).join("")}</div>
     ${s.teams.length<6?`<button class="btn btn-ghost small" data-act="addTeam">+ Ajouter une équipe</button>`:""}
   </section>
-  <section class="panel">
-    <h2>Partie</h2>
-    <div class="opt"><span>Nombre de cartes</span><div class="seg">${[20,30,40,60].map(n=>seg("cards",n,s.cardCount===n,n)).join("")}</div></div>
-    <div class="opt"><span>Durée d'un tour</span><div class="seg">${[30,45,60].map(n=>seg("dur",n,s.duration===n,n+" s")).join("")}</div></div>
-  </section>
-  <section class="panel">
-    <h2>Mots</h2>
-    <div class="seg">${Object.keys(CATS).map(k=>`<button class="${k==="hard"?"hard":""}" data-act="cat" data-k="${k}" aria-pressed="${s.cats.includes(k)}">${CATS[k]}<small>${WORDS[k].length}</small></button>`).join("")}</div>
-    <label for="custom" class="sub">Tes mots à toi, un par ligne</label>
-    <textarea id="custom" class="field" placeholder="Le prof de sport&#10;Le chien de Max&#10;Le kebab de la gare">${esc(s.custom)}</textarea>
-    <label class="check"><input type="checkbox" id="customOnly" ${s.customOnly?"checked":""}><span>Jouer uniquement avec mes mots</span></label>
-    <p class="avail" id="avail">${availText()}</p>
-  </section>
   ${ONLINE?`<section class="panel">
-    <h2>Téléphones</h2>
-    <label class="check"><input type="checkbox" id="phones" ${s.phones?"checked":""}><span>Chacun choisit ses mots sur son téléphone<small style="display:block;color:var(--muted);font-weight:400">Les catégories cochées au-dessus servent de réservoir. Ensuite, chaque téléphone affiche le chrono.</small></span></label>
+    <h2>Les cartes</h2>
+    <div class="src-pick">
+      <button class="src ${phones?"on":""}" data-act="src" data-v="phones" aria-pressed="${phones}"><b>Chacun choisit sur son téléphone</b><span>On scanne un QR code, chacun choisit ses cartes et son équipe</span></button>
+      <button class="src ${phones?"":"on"}" data-act="src" data-v="auto" aria-pressed="${!phones}"><b>Paquet automatique</b><span>Les cartes sont tirées au hasard, on joue tout de suite</span></button>
+    </div>
   </section>`:""}
+  <section class="panel">
+    <button class="fold" data-act="toggleSettings" aria-expanded="${!!ui.settingsOpen}">
+      <span><b>Réglages</b><small id="sum">${settingsSummary()}</small></span><i>${ui.settingsOpen?"Fermer":"Modifier"}</i>
+    </button>
+    ${ui.settingsOpen?`<div class="fold-body">
+      ${phones?"":`<div class="opt"><span>Nombre de cartes</span><div class="seg">${[20,30,40,60].map(n=>seg("cards",n,s.cardCount===n,n)).join("")}</div></div>`}
+      <div class="opt"><span>Durée d'un tour</span><div class="seg">${[30,45,60].map(n=>seg("dur",n,s.duration===n,n+" s")).join("")}</div></div>
+      <div class="opt"><span>${phones?"Thèmes proposés sur les téléphones":"Thèmes des cartes"}</span><div class="seg">${Object.keys(CATS).map(k=>`<button class="${k==="hard"?"hard":""}" data-act="cat" data-k="${k}" aria-pressed="${s.cats.includes(k)}">${CATS[k]}<small>${WORDS[k].length}</small></button>`).join("")}</div></div>
+      <button class="link-btn" style="align-self:flex-start;padding-left:0" data-act="toggleCustom">${ui.customOpen?"Masquer mes propres mots":"Ajouter mes propres mots"}</button>
+      ${ui.customOpen?`<label for="custom" class="sub">Un mot par ligne</label>
+      <textarea id="custom" class="field" placeholder="Le prof de sport&#10;Le chien de Max&#10;Le kebab de la gare">${esc(s.custom)}</textarea>
+      ${phones?"":`<label class="check"><input type="checkbox" id="customOnly" ${s.customOnly?"checked":""}><span>Jouer uniquement avec mes mots</span></label>`}`:""}
+      ${phones?"":`<p class="avail" id="avail">${availText()}</p>`}
+    </div>`:""}
+  </section>
   ${ui.err?`<p class="err">${esc(ui.err)}</p>`:""}
-  <button class="btn btn-sun start" data-act="start">${ONLINE&&s.phones?"Connecter les téléphones":"Lancer la partie"}</button>
+  <button class="btn btn-sun start" data-act="start">${phones?"Connecter les téléphones":"Lancer la partie"}</button>
 </div>`;
 }
 
@@ -694,12 +766,9 @@ function vLobby(){
 }
 function vPhonesSheet(){
   return `<div class="overlay" data-act="closePhones"><div class="sheet" data-stop style="align-items:center;text-align:center">
-    ${state.lobby?`<h2>Rejoindre la partie</h2>
+    <h2>Rejoindre la partie</h2>
     <p>Pour un joueur dont le téléphone a perdu la connexion : il scanne ce code et retrouve sa place et ses cartes.</p>
-    <div class="qr small">${qrSvg(joinUrl("p"))}</div>`:""}
-    <h2>Chrono sur téléphone</h2>
-    <p>Pour un téléphone posé au milieu de la table : il affichera le chrono en grand pendant chaque tour.</p>
-    <div class="qr small">${qrSvg(joinUrl("c"))}</div>
+    <div class="qr small">${qrSvg(joinUrl("p"))}</div>
     ${netBadge()}
     <button class="btn btn-sun" data-act="closePhones">Fermer</button>
   </div></div>`;
@@ -892,7 +961,7 @@ function vMenu(){
     <h2>Menu</h2>
     <button class="btn btn-sun" data-act="closeMenu">Reprendre</button>
     <button class="btn btn-ghost" data-act="rules">Les règles</button>
-    ${ONLINE?`<button class="btn btn-ghost" data-act="phones">Téléphones (QR codes)</button>`:""}
+    ${ONLINE&&state.lobby&&state.screen!=="setup"&&state.screen!=="home"&&state.screen!=="lobby"?`<button class="btn btn-ghost" data-act="phones">QR code pour rejoindre</button>`:""}
     <button class="btn btn-ghost" data-act="sound">Son : ${state.settings.sound?"activé":"coupé"}</button>
     <button class="btn btn-tomato" data-act="quit">${ui.confirmQuit?"Sûr ? Abandonner la partie":"Abandonner la partie"}</button>
   </div></div>`;
@@ -918,7 +987,7 @@ function render(){
   if(yielded)return;
   const s=state.screen;
   app.className=s==="turn"?"fill":(s==="lobby"?"scroll lobbymode":"scroll");
-  const v={setup:vSetup,lobby:vLobby,roundIntro:vRoundIntro,ready:vReady,turn:vTurn,turnEnd:vTurnEnd,roundEnd:vRoundEnd,gameEnd:vGameEnd}[s]||vSetup;
+  const v={home:vHome,setup:vSetup,lobby:vLobby,roundIntro:vRoundIntro,ready:vReady,turn:vTurn,turnEnd:vTurnEnd,roundEnd:vRoundEnd,gameEnd:vGameEnd}[s]||vSetup;
   app.innerHTML=v()+(ui.menu?vMenu():"")+(ui.rules?vRules():"")+(ui.phones?vPhonesSheet():"");
   updateTimer();
   save();
@@ -1243,7 +1312,7 @@ function undoTurn(){
 function undoLink(){
   const u=state.undo;if(!u||!state.teams[u.teamIdx])return "";
   const pts=u.turn.rows.filter(r=>r.ok).length;
-  return `<button class="btn btn-ghost small undo-btn" data-act="undoTurn">↶ Corriger le tour de ${esc(state.teams[u.teamIdx].name)} (+${pts})</button>`;
+  return `<button class="undo-btn" data-act="undoTurn">${ICON.undo}<span>Corriger le tour précédent <small>${esc(state.teams[u.teamIdx].name)} · +${pts}</small></span></button>`;
 }
 function resetGame(){
   state={screen:"setup",settings:state.settings,code:state.code,online:state.online,admin:state.admin};
@@ -1272,8 +1341,8 @@ function hostAct(act,el){
     case "sound":s.sound=!s.sound;render();if(s.sound)sfx.found();break;
     case "quit":if(!ui.confirmQuit){ui.confirmQuit=true;render()}else resetGame();break;
     case "addTeam":{
-      const usedC=s.teams.map(t=>t.color),usedN=s.teams.map(t=>t.name);
-      s.teams.push({name:TEAM_NAMES.find(n=>!usedN.includes(n))||("Équipe "+(s.teams.length+1)),color:COLORS.find(c=>!usedC.includes(c))||COLORS[0]});
+      const usedC=s.teams.map(t=>t.color),d=TEAM_DEFS.find(x=>!usedC.includes(x[1]))||TEAM_DEFS[0];
+      s.teams.push({name:d[0],color:d[1]});
       render();break;
     }
     case "delTeam":s.teams.splice(+el.dataset.i,1);render();break;
@@ -1281,8 +1350,15 @@ function hostAct(act,el){
       const i=+el.dataset.i,usedC=s.teams.filter((_,j)=>j!==i).map(t=>t.color);
       let k=COLORS.indexOf(s.teams[i].color);
       for(let n=0;n<COLORS.length;n++){k=(k+1)%COLORS.length;if(!usedC.includes(COLORS[k]))break}
+      // A default name follows the colour ("Équipe rouge" → "Équipe jaune"); a custom name is kept.
+      if(isAutoName(s.teams[i].name))s.teams[i].name=colorName(COLORS[k]);
       s.teams[i].color=COLORS[k];render();break;
     }
+    case "toSetup":state.screen="setup";window.scrollTo(0,0);render();break;
+    case "toHome":state.screen="home";window.scrollTo(0,0);render();break;
+    case "src":s.phones=el.dataset.v==="phones";render();break;
+    case "toggleSettings":ui.settingsOpen=!ui.settingsOpen;render();break;
+    case "toggleCustom":ui.customOpen=!ui.customOpen;render();break;
     case "cards":s.cardCount=+el.dataset.v;render();break;
     case "dur":s.duration=+el.dataset.v;render();break;
     case "cat":{const k=el.dataset.k;s.cats=s.cats.includes(k)?s.cats.filter(x=>x!==k):s.cats.concat(k);render();break}
@@ -1324,7 +1400,7 @@ function hostAct(act,el){
 document.addEventListener("input",e=>{
   const el=e.target,s=state.settings;
   if(el.dataset&&el.dataset.team!=null){s.teams[+el.dataset.team].name=el.value;save()}
-  else if(el.id==="custom"){s.custom=el.value;const a=document.getElementById("avail");if(a)a.textContent=availText();save()}
+  else if(el.id==="custom"){s.custom=el.value;const a=document.getElementById("avail");if(a)a.textContent=availText();const m=document.getElementById("sum");if(m)m.textContent=settingsSummary();save()}
 });
 document.addEventListener("change",e=>{
   const el=e.target,s=state.settings;
@@ -1560,10 +1636,10 @@ function vAdminPanel(a){
       :aBtn("pause","Pause","btn-sun");
     if(s==="turnEnd"&&a.recapBy!=null)body+=`<p class="lead"><b>+${plural(a.pts||0,"point")}</b> · ${esc(a.recapBy)} vérifie les cartes sur son téléphone.</p>`
       +(a.giverOnline?"":aConfirm("recap","recapTablet","Vérifier les cartes sur la tablette","Les cartes vont s'afficher sur la tablette, tout le monde pourra les voir."));
-    if((s==="ready"||s==="roundEnd")&&a.undo)body+=aBtn("undoTurn",`↶ Corriger le tour de ${esc(a.undo.team)} (+${a.undo.pts})`);
     if(s==="turnEnd"&&a.rows)body+=`<div class="recap">${a.rows.map((r,i)=>`<button class="tr ${r.ok?"is-ok":(r.last?"is-last":"is-no")}" data-act="adm" data-a="toggleRow" data-i="${i}"><span>${esc(r.w)}</span><i>${r.ok||r.last?ICON.ok:ICON.no}</i></button>`).join("")||`<p class="lead">Aucune carte ce tour-ci.</p>`}</div>
       <p class="hint">Touche une carte pour corriger.</p>`+aBtn("confirmTurn",`Valider · +${plural(a.rows.filter(r=>r.ok).length,"point")}`,"btn-sun");
     if(s==="roundEnd")body+=aBtn("nextRound",a.round<3?"Manche suivante":"Résultat final","btn-sun");
+    if((s==="ready"||s==="roundEnd")&&a.undo)body+=`<button class="undo-btn" data-act="adm" data-a="undoTurn">${ICON.undo}<span>Corriger le tour précédent <small>${esc(a.undo.team)} · +${a.undo.pts}</small></span></button>`;
     if(s==="gameEnd")body+=aBtn("rematch","Revanche, mêmes cartes","btn-sun")+aBtn("newGame","Nouvelle partie");
     if(a.scores)body+=`<div class="adm-scores">${a.scores.map(x=>`<span>${esc(x.name)} · ${x.total}</span>`).join("")}</div>`;
     if(s!=="gameEnd")body+=aConfirm("quit","quit","Abandonner la partie","La partie en cours sera perdue et la tablette revient à l'accueil.");
@@ -1731,11 +1807,16 @@ function start(data){
   let st=(data&&data.state)||store.get(KEY);
   if(!st||!st.settings||!st.screen)st=initial();
   st.settings=Object.assign(defaults(),st.settings);
+  // Back another day (or first time): team names reset to the defaults and the app opens on the welcome screen.
+  const stale=!st.settings.seenAt||Date.now()-st.settings.seenAt>STALE_MS;
+  if(stale&&(st.screen==="setup"||st.screen==="home")){st.settings.teams=defaultTeams();st.screen="home"}
+  st.settings.teams.forEach(t=>{if(OLD_NAMES.includes(t.name))t.name=colorName(t.color)});
+  if(st.teams)st.teams.forEach(t=>{if(OLD_NAMES.includes(t.name))t.name=colorName(t.color)});
   if(st.turn&&!st.turn.rows){st.turn=null;if(st.screen==="turn"||st.screen==="turnEnd")st.screen="ready"}
   if(st.screen==="ready"&&st.round===undefined)st.screen="setup";
   if(st.screen==="turn"&&st.turn)st.turn.paused=true;
   if(st.screen==="lobby"){if(!st.lobby||!st.code)st={screen:"setup",settings:st.settings}}
-  else if(st.screen!=="setup"&&(!st.deck||!st.teams))st={screen:"setup",settings:st.settings,code:st.code,online:st.online,admin:st.admin};
+  else if(st.screen!=="setup"&&st.screen!=="home"&&(!st.deck||!st.teams))st={screen:"setup",settings:st.settings,code:st.code,online:st.online,admin:st.admin};
   state=st;
   if(ONLINE)claimHost();
   render();
