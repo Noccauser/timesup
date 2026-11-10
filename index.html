@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<!-- Time's Up nocca · v1.24 -->
+<!-- Time's Up nocca · v1.25 -->
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1B2A8C">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -283,29 +283,43 @@ textarea.field{min-height:130px;padding:12px 14px;resize:vertical;line-height:1.
 .start{min-height:76px;font-size:1.8rem;width:100%}
 .setup .topbar .t-label{flex:1;text-align:center}
 /* Welcome */
-.home{flex:1;width:100%;max-width:760px;margin:0 auto;display:flex;flex-direction:column;justify-content:space-between;align-items:center;gap:28px;text-align:center;padding-block:clamp(8px,4vh,48px)}
-.home-main{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:22px}
-.home-logo .stamp{right:clamp(-20px,-1.8vw,-12px);bottom:clamp(-20px,-1.8vw,-12px);font-size:clamp(1.1rem,2.6vw,1.6rem);padding:4px 14px}
+.home{flex:1;width:100%;max-width:760px;margin:0 auto;display:flex;flex-direction:column;justify-content:space-evenly;align-items:center;gap:clamp(18px,4vh,40px);text-align:center;padding-block:clamp(8px,3vh,40px)}
+.home-main{display:flex;flex-direction:column;align-items:center;gap:clamp(12px,2.4vh,22px)}
 .stamp-inline{display:inline-block;transform:rotate(-7deg);background:var(--sun);color:var(--ink);font-size:.55em;padding:2px 10px;border-radius:8px;vertical-align:middle;box-shadow:0 3px 0 rgba(6,10,50,.4)}
 .home-logo .logo-main{font-size:clamp(3.8rem,15vw,7.5rem)}
-.home-logo .stamp{font-size:clamp(1.15rem,3.6vw,1.6rem);right:-10px;bottom:-16px}
+.home-logo .stamp{right:clamp(-20px,-1.8vw,-12px);bottom:clamp(-20px,-1.8vw,-12px);font-size:clamp(1.1rem,2.6vw,1.6rem);padding:4px 14px}
 .home .tagline{margin-top:14px;font-size:clamp(1.05rem,3vw,1.25rem);max-width:32ch}
-.home-cards{position:relative;width:min(80vw,380px);height:clamp(110px,18vh,170px);margin-bottom:6px}
-.hc{position:absolute;left:50%;top:50%;width:clamp(120px,30vw,160px);aspect-ratio:3/4;max-height:100%;background:var(--paper);color:var(--ink);border-radius:14px;
-  box-shadow:0 6px 0 rgba(6,10,50,.4);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-family:var(--display);font-size:clamp(.9rem,2.6vw,1.1rem);padding:8px;line-height:1.1;
-  transform:translate(-50%,-50%) rotate(var(--r)) translateX(var(--x));animation:hcbob 3.2s ease-in-out infinite alternate;animation-delay:var(--d)}
-.hc i{font-style:normal;width:30px;height:30px;border-radius:50%;background:var(--c);color:var(--ink);display:grid;place-items:center;font-size:1rem}
-.hc1{--r:-12deg;--x:-84%;--c:var(--sun);--d:0s}
-.hc2{--r:0deg;--x:0%;--c:var(--mint);--d:.4s;z-index:1}
-.hc3{--r:12deg;--x:84%;--c:var(--tomato);--d:.8s}
-@keyframes hcbob{from{margin-top:0}to{margin-top:-8px}}
-.home-actions{width:100%;max-width:440px;display:flex;flex-direction:column;align-items:center;gap:6px}
-.home-play{width:100%;min-height:92px;font-size:clamp(2.2rem,7vw,2.8rem);border-radius:26px}
+/* The three rounds, as three little cards from the same deck as the game card (paper, dashed inner line). */
+.home-cards{display:flex;justify-content:center;align-items:flex-end;gap:clamp(8px,2.4vw,16px);margin-top:6px}
+.hc{position:relative;width:clamp(88px,23vw,128px);aspect-ratio:4/5;background:var(--paper);color:var(--ink);border-radius:16px;
+  box-shadow:0 6px 0 rgba(6,10,50,.4);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(4px,1vw,8px);padding:14px 6px 10px;transform:rotate(var(--r)) translateY(var(--y))}
+.hc::before{content:"";position:absolute;inset:6px;border:2px dashed rgba(20,26,58,.14);border-radius:11px;pointer-events:none}
+.hc i{position:absolute;left:-7px;top:-9px;font-style:normal;width:32px;height:32px;border-radius:50%;background:var(--c);color:var(--ink);border:3px solid var(--paper);display:grid;place-items:center;font-family:var(--display);font-size:1rem;box-shadow:0 3px 0 rgba(6,10,50,.35)}
+.hc svg{width:48%;height:auto;color:var(--ink)}
+.hc b{font-family:var(--display);font-weight:400;font-size:clamp(.85rem,2.5vw,1.1rem);line-height:1.05}
+.hc1{--r:-5deg;--y:5px;--c:var(--sun)}
+.hc2{--r:0deg;--y:-5px;--c:var(--mint)}
+.hc3{--r:5deg;--y:5px;--c:var(--tomato)}
+.hc3 i{color:#fff}
+.home-actions{width:100%;max-width:400px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.disc-wrap.home-disc{width:min(62vw,32vh,360px);margin-bottom:clamp(18px,3.4vh,34px)}
+.home-disc .disc{width:78%;padding:10px}
+.home-disc .disc strong{font-size:clamp(2.2rem,min(9vw,5.6vh),3.6rem)}
+@media (orientation:landscape) and (min-width:900px){
+  .home{flex-direction:row;max-width:1120px;justify-content:center;gap:clamp(32px,6vw,90px)}
+  .home-main{flex:0 1 560px}
+  .home-actions{flex:0 0 340px}
+  .disc-wrap.home-disc{width:min(100%,46vh,340px)}
+}
 /* Card source choice */
 .src-pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
-.src{border:2px solid var(--line);background:rgba(255,255,255,.05);color:var(--fg);border-radius:16px;padding:14px 16px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:4px;font:inherit}
+.src{border:2px solid var(--line);background:rgba(255,255,255,.05);color:var(--fg);border-radius:16px;padding:14px 16px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:14px;font:inherit}
+.src-ico{flex:none;width:52px;height:52px;border-radius:14px;background:rgba(255,255,255,.1);display:grid;place-items:center;color:var(--fg)}
+.src-ico svg{width:30px;height:30px}
+.src.on .src-ico{background:var(--sun);color:var(--ink)}
+.src-txt{display:flex;flex-direction:column;gap:4px;min-width:0}
 .src b{font-weight:800;font-size:1.05rem}
-.src span{color:var(--muted);font-size:.92rem;line-height:1.35}
+.src-txt span{color:var(--muted);font-size:.92rem;line-height:1.35}
 .src.on{border-color:var(--sun);background:rgba(255,201,60,.12);box-shadow:inset 0 0 0 1px var(--sun)}
 /* Folded settings */
 .fold{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;background:none;border:0;color:var(--fg);cursor:pointer;padding:0;text-align:left;font:inherit}
@@ -314,7 +328,6 @@ textarea.field{min-height:130px;padding:12px 14px;resize:vertical;line-height:1.
 .fold small{font-size:1rem;font-weight:700;color:var(--fg)}
 .fold i{font-style:normal;flex:none;background:rgba(255,255,255,.1);border-radius:999px;padding:8px 14px;font-weight:700;font-size:.9rem}
 .fold-body{display:flex;flex-direction:column;gap:16px;border-top:1px solid var(--line);padding-top:16px}
-@media (prefers-reduced-motion:reduce){.hc{animation:none}}
 
 /* Shared */
 .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -517,6 +530,24 @@ textarea.field{min-height:130px;padding:12px 14px;resize:vertical;line-height:1.
 .duo-parts small{font-size:.72rem;white-space:nowrap;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
 .duo-parts b{font-family:var(--display);font-weight:400;font-size:1.8rem}
 .duo-score{font-family:var(--display);font-size:1.4rem}
+.duo-top{display:flex;align-items:center;gap:10px}
+.duo-dots{display:inline-flex;gap:6px}
+.duo-dots i{width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,.2)}
+.duo-dots i.done{background:var(--mint)}
+.duo-dots i.cur{background:var(--sun);box-shadow:0 0 0 3px rgba(255,201,60,.3)}
+.duo-pass{margin:0;background:var(--paper);color:var(--ink);font-weight:700;font-size:clamp(1.05rem,3.2vw,1.3rem);padding:10px 22px;border-radius:999px;box-shadow:0 4px 0 rgba(6,10,50,.4)}
+.duo-pass b{font-family:var(--display);font-weight:400;font-size:1.15em}
+.duo-action{font-size:clamp(3.2rem,14vw,6.2rem)}
+.duo-action.k0{color:var(--sun)} .duo-action.k1{color:var(--mint)} .duo-action.k2{color:#FF8A7A}
+.duo-facts{margin:0;display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+.duo-facts span{background:rgba(255,255,255,.1);border-radius:999px;padding:7px 14px;font-weight:700;font-size:.98rem}
+.duo-hud{justify-content:space-between}
+.duo-act{display:flex;align-items:center;gap:12px;min-width:0}
+.duo-act i{flex:none;font-style:normal;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-size:1.35rem;color:var(--ink);background:var(--sun);box-shadow:0 3px 0 rgba(6,10,50,.4)}
+.duo-act.k1 i{background:var(--mint)} .duo-act.k2 i{background:var(--tomato);color:#fff}
+.duo-act div{display:flex;flex-direction:column;min-width:0;line-height:1.1}
+.duo-act b{font-family:var(--display);font-weight:400;font-size:clamp(1.6rem,min(6.2vw,5.4vh),3.2rem);color:var(--paper);white-space:nowrap}
+.duo-act small{color:var(--muted);font-weight:700;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .timer{position:relative}
 .time-pop{position:absolute;right:4%;top:12%;font-family:var(--display);font-size:clamp(1.8rem,6vw,2.6rem);pointer-events:none;animation:tpop 1.1s ease-out forwards;text-shadow:0 3px 0 rgba(6,10,50,.35)}
 .time-pop.good{color:var(--mint)} .time-pop.bad{color:var(--tomato)}
@@ -525,7 +556,7 @@ textarea.field{min-height:130px;padding:12px 14px;resize:vertical;line-height:1.
 
 <div id="app"></div>
 <div id="adm"></div>
-<div class="ver" id="ver" aria-hidden="true">v1.24</div>
+<div class="ver" id="ver" aria-hidden="true">v1.25</div>
 <div class="upd" id="upd" hidden>Mise à jour…</div>
 
 <script>
@@ -556,6 +587,11 @@ function cleanStr(v,max){return typeof v==="string"?v.replace(/[\u0000-\u001f<>]
 function cleanArr(v,n,max){return Array.isArray(v)?v.map(x=>cleanStr(x,max)).filter(Boolean).slice(0,n):[]}
 function makeCode(){const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";let s="";for(let i=0;i<4;i++)s+=a[Math.floor(Math.random()*a.length)];return s}
 const ICON={
+  qr:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M14 14h2.6v2.6H14zM17.4 17.4H20V20h-2.6z" fill="currentColor"/><path d="M18.7 14v1.3M14 18.7V20" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>',
+  shuffle:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h3.2c2 0 3.3 1 4.4 2.7l2.8 4.6c1.1 1.7 2.4 2.7 4.4 2.7H21M3 17h3.2c1.5 0 2.6-.6 3.5-1.6M21 7h-3.2c-1.5 0-2.6.6-3.5 1.6M18 4l3 3-3 3M18 14l3 3-3 3" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  say:'<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M11 7h26a6 6 0 0 1 6 6v15a6 6 0 0 1-6 6H24l-9 8v-8h-4a6 6 0 0 1-6-6V13a6 6 0 0 1 6-6z" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linejoin="round"/><path d="M14 16.5h20M14 24.5h12" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/></svg>',
+  one:'<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M11 7h26a6 6 0 0 1 6 6v15a6 6 0 0 1-6 6H24l-9 8v-8h-4a6 6 0 0 1-6-6V13a6 6 0 0 1 6-6z" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linejoin="round"/><path d="M17 20.5h14" stroke="currentColor" stroke-width="5.4" stroke-linecap="round"/></svg>',
+  mime:'<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M11 7h26a6 6 0 0 1 6 6v15a6 6 0 0 1-6 6H24l-9 8v-8h-4a6 6 0 0 1-6-6V13a6 6 0 0 1 6-6z" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linejoin="round"/><path d="M8 40 40 5" stroke="var(--paper)" stroke-width="9" stroke-linecap="round"/><path d="M8 40 40 5" stroke="currentColor" stroke-width="3.8" stroke-linecap="round"/></svg>',
   ok:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12.8l4.6 4.6L19.5 6.8" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   no:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/></svg>',
   undo:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/></svg>',
@@ -632,7 +668,8 @@ function tone(f,d,type,vol,when){
 }
 const sfx={
   found(){tone(784,.12,"triangle",.22);tone(1175,.18,"triangle",.2,.08)},
-  pass(){tone(330,.12,"triangle",.15)},
+  // Loud, low and falling: the whole table hears a pass without the giver saying it.
+  pass(){tone(392,.13,"square",.34);tone(233,.3,"square",.34,.12);tone(116,.3,"sawtooth",.22,.12)},
   tick(){tone(700,.06,"square",.07)},
   buzz(){tone(150,.8,"sawtooth",.25);tone(110,.8,"sawtooth",.18)},
   go(){tone(523,.1,"triangle",.2);tone(659,.1,"triangle",.2,.1);tone(784,.2,"triangle",.2,.2)}
@@ -691,19 +728,21 @@ function board(){
 }
 function seg(group,val,on,label){return `<button data-act="${group}" data-v="${val}" aria-pressed="${on}">${label}</button>`}
 
-/* Welcome screen: the logo, the three rounds as cards, one big Play button */
+/* Welcome screen: the logo, the three rounds as small cards, one big round Play button (the same disc as every "Go"). */
 function vHome(){
   return `<div class="home">
     <div class="home-main">
-      <div class="home-cards" aria-hidden="true">
-        <span class="hc hc1"><i>1</i>Décrivez !</span><span class="hc hc2"><i>2</i>Un seul mot !</span><span class="hc hc3"><i>3</i>Mimez !</span>
-      </div>
       <div class="logo home-logo"><span class="logo-main">Time's Up</span><span class="stamp">nocca</span></div>
       <p class="tagline">Faites deviner un max de cartes à votre équipe, en 3 manches.</p>
+      <div class="home-cards" aria-hidden="true">
+        <span class="hc hc1"><i>1</i>${ICON.say}<b>Décrivez</b></span>
+        <span class="hc hc2"><i>2</i>${ICON.one}<b>Un seul mot</b></span>
+        <span class="hc hc3"><i>3</i>${ICON.mime}<b>Mimez</b></span>
+      </div>
     </div>
     <div class="home-actions">
-      <button class="btn btn-sun home-play" data-act="toSetup">Jouer</button>
-      <button class="btn btn-ghost home-duo" data-act="toDuo">Mode duo<small>À deux contre la montre</small></button>
+      <div class="disc-wrap home-disc"><button class="disc" style="--team:var(--sun)" data-act="toSetup"><strong>Jouer</strong></button></div>
+      <button class="btn btn-ghost home-duo" data-act="toDuo">Mode duo<small>À deux, pour le classement</small></button>
       <button class="link-btn" data-act="rules">Les règles</button>
     </div>
   </div>`;
@@ -734,13 +773,13 @@ function vSetup(){
   ${ONLINE?`<section class="panel">
     <h2>Les cartes</h2>
     <div class="src-pick">
-      <button class="src ${phones?"on":""}" data-act="src" data-v="phones" aria-pressed="${phones}"><b>Chacun choisit sur son téléphone</b><span>On scanne un QR code, chacun choisit ses cartes et son équipe</span></button>
-      <button class="src ${phones?"":"on"}" data-act="src" data-v="auto" aria-pressed="${!phones}"><b>Paquet automatique</b><span>Les cartes sont tirées au hasard, on joue tout de suite</span></button>
+      <button class="src ${phones?"on":""}" data-act="src" data-v="phones" aria-pressed="${phones}"><i class="src-ico">${ICON.qr}</i><span class="src-txt"><b>Chacun choisit sur son téléphone</b><span>On scanne un QR code, chacun choisit ses cartes et son équipe</span></span></button>
+      <button class="src ${phones?"":"on"}" data-act="src" data-v="auto" aria-pressed="${!phones}"><i class="src-ico">${ICON.shuffle}</i><span class="src-txt"><b>Paquet automatique</b><span>Les cartes sont tirées au hasard, on joue tout de suite</span></span></button>
     </div>
   </section>`:""}
   <section class="panel">
     <button class="fold" data-act="toggleSettings" aria-expanded="${!!ui.settingsOpen}">
-      <span><b>Réglages</b><small id="sum">${settingsSummary()}</small></span><i>${ui.settingsOpen?"Fermer":"Modifier"}</i>
+      <span><b>Vos paramètres</b><small id="sum">${settingsSummary()}</small></span><i>${ui.settingsOpen?"Fermer":"Modifier"}</i>
     </button>
     ${ui.settingsOpen?`<div class="fold-body">
       ${phones?"":`<div class="opt"><span>Nombre de cartes</span><div class="seg">${[20,30,40,60].map(n=>seg("cards",n,s.cardCount===n,n)).join("")}</div></div>`}
@@ -1069,7 +1108,7 @@ function lbFor(){return lbClean(lbRaw())}
 function lbAdd(e){
   const list=lbClean(lbRaw()),key=duoKey(e.a,e.b),old=list.find(x=>duoKey(x.a,x.b)===key);
   const res={prev:old?old.score:0,improved:!old||lbBetter(e,old)>0,ts:old?old.ts:e.ts};
-  if(res.improved){res.ts=e.ts;store.set(LB_KEY,list.filter(x=>x!==old).concat(e).sort((x,y)=>lbBetter(y,x)).slice(0,50))}
+  if(res.improved){res.ts=e.ts;res.old=old||null;store.set(LB_KEY,list.filter(x=>x!==old).concat(e).sort((x,y)=>lbBetter(y,x)).slice(0,50))}
   return res;
 }
 function duoNames(){const s=state.settings;return {a:(s.duoA||"").trim()||"Joueur 1",b:(s.duoB||"").trim()||"Joueur 2"}}
@@ -1091,12 +1130,7 @@ function vDuoSetup(){
   return `<div class="setup">
   <div class="topbar"><button class="icon-btn" data-act="toHome">← Accueil</button><span class="t-label">Mode duo</span><button class="icon-btn" data-act="rules">Règles</button></div>
   <div class="duo-hero"><h1 class="mega" style="font-size:clamp(2.6rem,9vw,4rem)">Mode duo</h1>
-    <p class="duo-rule">4 manches, chacun fait deviner 2 fois, un max de points.</p></div>
-  <ol class="duo-steps">
-    <li><span class="n">1</span><div><b>Décrivez · chacun son tour</b><small>2 manches · 60 s · <b class="g">+3 s</b> par carte trouvée · passer est gratuit</small></div></li>
-    <li><span class="n">2</span><div><b>Un seul mot</b><small>Toutes les cartes trouvées · 60 s · un seul essai par carte</small></div></li>
-    <li><span class="n">3</span><div><b>Mimez</b><small>Les mêmes cartes · 60 s · un seul essai par carte</small></div></li>
-  </ol>
+    <p class="duo-rule">À deux, 4 manches, un max de points.</p></div>
   <section class="panel">
     <h2>Vos prénoms</h2>
     <div class="duo-names">
@@ -1104,11 +1138,19 @@ function vDuoSetup(){
       <button class="icon-btn swap" data-act="duoSwap" aria-label="Inverser qui commence">⇄</button>
       <label><span>Et</span><input id="duo-b" class="field" maxlength="20" value="${esc(s.duoB||"")}" placeholder="Prénom" autocomplete="off"></label>
     </div>
-    <button class="fold" data-act="toggleSettings" aria-expanded="${!!ui.settingsOpen}"><span><b>Thèmes</b><small>${plural(s.cats.length,"thème")}${s.cats.includes("hard")?" (18+)":""}</small></span><i>${ui.settingsOpen?"Fermer":"Modifier"}</i></button>
-    ${ui.settingsOpen?`<div class="seg">${Object.keys(CATS).map(k=>`<button class="${k==="hard"?"hard":""}" data-act="cat" data-k="${k}" aria-pressed="${s.cats.includes(k)}">${CATS[k]}<small>${WORDS[k].length}</small></button>`).join("")}</div>`:""}
   </section>
   ${ui.err?`<p class="err">${esc(ui.err)}</p>`:""}
   <button class="btn btn-sun start" data-act="duoStart">C'est parti</button>
+  <section class="panel">
+    <button class="fold" data-act="duoHelp" aria-expanded="${!!ui.duoHelp}"><span><b>Comment ça marche</b><small>Décrire, un seul mot, mimer</small></span><i>${ui.duoHelp?"Fermer":"Voir"}</i></button>
+    ${ui.duoHelp?`<ol class="duo-steps">
+      <li><span class="n">1</span><div><b>Décrivez, chacun son tour</b><small>2 manches de 60 s. <b class="g">+3 s</b> par carte trouvée, passer est gratuit.</small></div></li>
+      <li><span class="n">2</span><div><b>Un seul mot</b><small>Les cartes trouvées reviennent. 60 s, un seul essai par carte.</small></div></li>
+      <li><span class="n">3</span><div><b>Mimez</b><small>Encore les mêmes cartes. 60 s, un seul essai par carte.</small></div></li>
+    </ol>`:""}
+    <button class="fold" data-act="toggleSettings" aria-expanded="${!!ui.settingsOpen}"><span><b>Thèmes</b><small>${plural(s.cats.length,"thème")}${s.cats.includes("hard")?" (18+)":""}</small></span><i>${ui.settingsOpen?"Fermer":"Modifier"}</i></button>
+    ${ui.settingsOpen?`<div class="seg">${Object.keys(CATS).map(k=>`<button class="${k==="hard"?"hard":""}" data-act="cat" data-k="${k}" aria-pressed="${s.cats.includes(k)}">${CATS[k]}<small>${WORDS[k].length}</small></button>`).join("")}</div>`:""}
+  </section>
   <section class="panel">
     <h2>Classement</h2>
     ${lbList()}
@@ -1118,18 +1160,28 @@ function vDuoSetup(){
   </section>
 </div>`;
 }
+/* The 4 rounds as dots: done, current, to come. */
+function duoDots(d){
+  return `<span class="duo-dots" aria-label="Manche ${d.round} sur 4">${[1,2,3,4].map(i=>`<i class="${i<d.round?"done":i===d.round?"cur":""}"></i>`).join("")}</span>`;
+}
+function duoUndoLink(){
+  const u=state.duo&&state.duo.undo;if(!u)return "";
+  return `<button class="undo-btn" data-act="duoUndo">${ICON.undo}<span>Corriger la manche précédente <small>${DUO_LABELS[u.round-1]} · +${u.plays.filter(p=>p.ok).length}</small></span></button>`;
+}
+/* Before each round: one big word says what to do, the rest stays small. */
 function vDuoReady(){
-  const d=state.duo,R=ROUNDS[DUO_KIND[d.round-1]],n=d.deck.length,g=duoGiver(d),o=duoGuesser(d);
-  const extra=duoDescribe(d)
-    ?`<b>60 secondes</b>, et <b>+3 s</b> à chaque carte trouvée (${DUO_MAX} cartes max). Passer est gratuit. Les cartes trouvées serviront aux manches 3 et 4.`
-    :`<b>${n} carte${n>1?"s":""}</b> à refaire, <b>60 secondes</b>. Carte ratée ou passée : perdue pour cette manche.`;
-  return `<div class="topbar"><span class="t-label">Mode duo · Manche ${d.round}/4</span><button class="icon-btn" data-act="duoPause">Pause</button></div>
+  const d=state.duo,k=DUO_KIND[d.round-1],R=ROUNDS[k],n=d.deck.length,g=duoGiver(d),o=duoGuesser(d);
+  const total=d.parts.reduce((x,y)=>x+y,0);
+  const facts=k===0?["60 secondes","+3 s par carte trouvée","Passer est gratuit"]
+    :k===1?[plural(n,"carte")+" à refaire","60 secondes","Un seul essai par carte"]
+    :[plural(n,"carte")+" à refaire","60 secondes","Sans parler"];
+  return `<div class="topbar"><span class="t-label duo-top">${duoDots(d)}<span>Manche ${d.round}/4${d.round>1?` · ${plural(total,"point")}`:""}</span></span><button class="icon-btn" data-act="duoPause">Pause</button></div>
   <div class="center-col">
-    ${d.round>1?`<p class="duo-recap">Manche ${d.round-1} : <b>${d.parts[d.round-2]}</b> carte${d.parts[d.round-2]>1?"s":""} · Total <b>${d.parts.reduce((x,y)=>x+y,0)}</b></p>
-    <h1 class="mega" style="font-size:clamp(2.2rem,7.5vw,3.6rem)">Passe la tablette à ${esc(g)}</h1>`:""}
-    <div class="titles"><p class="mega-sub" style="font-size:clamp(1.6rem,5vw,2.4rem)">${R.title}</p><p class="duo-who">${esc(g)} fait deviner à ${esc(o)}</p></div>
-    <p class="round-rules">${R.rules}<br>${extra}</p>
-    <div class="disc-wrap"><button class="disc" style="--team:var(--sun)" data-act="duoGo" aria-label="Lancer le chrono"><small>Manche ${d.round}</small><strong>Prêts ?</strong><span class="go-pill">Go !</span></button></div>
+    ${d.round>1?`<p class="duo-pass">Passe la tablette à <b>${esc(g)}</b></p>`:""}
+    <div class="titles"><h1 class="mega duo-action k${k}">${R.title}</h1><p class="duo-who">${esc(g)} fait deviner à ${esc(o)}</p></div>
+    <p class="duo-facts">${facts.map(f=>`<span>${f}</span>`).join("")}</p>
+    <div class="disc-wrap"><button class="disc" style="--team:var(--sun)" data-act="duoGo" aria-label="Lancer le chrono"><strong>Prêts ?</strong><span class="go-pill">Go !</span></button></div>
+    ${duoUndoLink()}
   </div>
   ${d.paused?duoPauseLayer():""}`;
 }
@@ -1141,12 +1193,12 @@ function duoPauseLayer(){
 }
 function vDuoTurn(){
   const d=state.duo,R=ROUNDS[DUO_KIND[d.round-1]],card=d.deck[d.pos]||{w:""},got=d.parts[d.round-1];
-  const rest=d.deck.length-d.pos,mid=duoDescribe(d)?R.title:`Encore ${rest} carte${rest>1?"s":""}`;
+  const k=DUO_KIND[d.round-1],rest=d.deck.length-d.pos;
+  const sub=esc(duoGiver(d))+(k===0?" fait deviner":` · encore ${plural(rest,"carte")}`);
   const anim=ui.shake?"shake":"enter";ui.shake=false;
   return `<div class="play">
-    <header class="hud">
-      <span class="pill" style="--team:var(--sun)">${esc(duoGiver(d))}</span>
-      <span class="hud-mid">${mid}</span>
+    <header class="hud duo-hud">
+      <div class="duo-act k${k}"><i>${d.round}</i><div><b>${R.title}</b><small>${sub}</small></div></div>
       <button class="icon-btn" data-act="duoPause">Pause</button>
     </header>
     <div class="stage">
@@ -1186,6 +1238,7 @@ function vDuoEnd(){
       <button class="btn btn-sun" data-act="duoStart">Rejouer</button>
       <button class="btn btn-ghost" data-act="duoBack">Changer de duo</button>
     </div>
+    ${duoUndoLink()}
     <section class="panel" style="width:100%;max-width:560px;text-align:left">
       <h2>Classement</h2>
       ${lbList(d.saved)}
@@ -1203,7 +1256,7 @@ function duoMarkUsed(){
   const d=state.duo;if(!duoDescribe(d)||!d.deck[d.pos])return;
   const used=new Set(store.get(USED)||[]);used.add(d.deck[d.pos].w);store.set(USED,[...used]);
 }
-function duoGo(){const d=state.duo;d.left=DUO_START;d.endsAt=Date.now()+d.left;d.paused=false;state.screen="duoTurn";lastSec=null;duoMarkUsed();sfx.go();wake();render()}
+function duoGo(){const d=state.duo;d.undo=null;d.left=DUO_START;d.endsAt=Date.now()+d.left;d.paused=false;state.screen="duoTurn";lastSec=null;duoMarkUsed();sfx.go();wake();render()}
 function duoTimePop(txt,good){
   const t=document.getElementById("timer");if(!t)return;
   const el=document.createElement("span");el.className="time-pop "+(good?"good":"bad");el.textContent=txt;
@@ -1245,6 +1298,8 @@ function vDuoRecap(){
 function duoValidate(){
   const d=state.duo;if(!d||state.screen!=="duoRecap")return;
   const ok=d.plays.filter(p=>p.ok);
+  // Kept until the next chrono starts, so a validated round can still be corrected.
+  d.undo={round:d.round,plays:d.plays.map(p=>({...p})),parts:d.parts.slice(),found:d.found.slice(),pos:d.pos,spare:d.spare,cleared:d.cleared};
   d.parts[d.round-1]=ok.length;
   if(duoDescribe(d))d.found=d.found.concat(ok.map(p=>({w:p.w,c:p.c})));
   d.plays=[];
@@ -1256,9 +1311,16 @@ function duoValidate(){
   d.left=DUO_START;d.paused=false;
   state.screen="duoReady";window.scrollTo(0,0);render();
 }
+/* Back to the recap of the round just validated (also from the final screen: the score is taken back out of the ranking). */
+function duoUndo(){
+  const d=state.duo,u=d&&d.undo;if(!u||(state.screen!=="duoReady"&&state.screen!=="duoEnd"))return;
+  if(d.saved&&d.improved){store.set(LB_KEY,lbRaw().filter(e=>e.ts!==d.saved).concat(d.lbOld?[d.lbOld]:[]))}
+  Object.assign(d,{round:u.round,plays:u.plays,parts:u.parts,found:u.found,pos:u.pos,spare:u.spare,cleared:u.cleared,undo:null,saved:0,improved:false,prev:0,lbOld:null,paused:false});
+  state.screen="duoRecap";window.scrollTo(0,0);render();
+}
 function duoFinish(){
   const d=state.duo,total=d.parts.reduce((x,y)=>x+y,0);
-  if(total>0&&!d.saved){const r=lbAdd({a:d.a,b:d.b,score:total,parts:d.parts.slice(),spare:Math.round(d.spare/1000),ts:Date.now()});d.saved=r.ts;d.improved=r.improved;d.prev=r.prev}
+  if(total>0&&!d.saved){const r=lbAdd({a:d.a,b:d.b,score:total,parts:d.parts.slice(),spare:Math.round(d.spare/1000),ts:Date.now()});d.saved=r.ts;d.improved=r.improved;d.prev=r.prev;d.lbOld=r.old||null}
   state.screen="duoEnd";window.scrollTo(0,0);render();
 }
 setInterval(()=>{
@@ -1657,6 +1719,8 @@ function hostAct(act,el){
     case "duoResume":{const d=state.duo;if(d){d.paused=false;d.endsAt=Date.now()+d.left;lastSec=null;render()}break}
     case "duoToggle":{const r=state.duo&&state.duo.plays[+el.dataset.i];if(r){r.ok=!r.ok;render()}break}
     case "duoValidate":duoValidate();break;
+    case "duoUndo":duoUndo();break;
+    case "duoHelp":ui.duoHelp=!ui.duoHelp;render();break;
     case "duoQuitAsk":ui.confirmQuit=true;render();break;
     case "duoQuitCancel":ui.confirmQuit=false;render();break;
     case "duoQuit":ui.confirmQuit=false;state.duo=null;state.screen="duoSetup";render();break;
@@ -2139,7 +2203,7 @@ function start(data){
 /* ---------- auto update ----------
    On launch and each time the app comes back to the screen, it checks GitHub for a newer
    index.html and reloads itself (never in the middle of a turn). No need to redo the bookmark. */
-const VERSION="v1.24";
+const VERSION="v1.25";
 let newVer=null;
 function calmToReload(){
   if(ROLE!=="host")return !(pn.tick&&pn.tick.me&&pn.tick.screen==="turn");
