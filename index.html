@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<!-- Time's Up nocca · v1.29 -->
+<!-- Time's Up nocca · v1.30 -->
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1B2A8C">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -593,7 +593,7 @@ textarea.field{min-height:130px;padding:12px 14px;resize:vertical;line-height:1.
 
 <div id="app"></div>
 <div id="adm"></div>
-<div class="ver" id="ver" aria-hidden="true">v1.29</div>
+<div class="ver" id="ver" aria-hidden="true">v1.30</div>
 <div class="upd" id="upd" hidden>Mise à jour…</div>
 
 <script>
@@ -610,6 +610,8 @@ const store={
 const INVIEWER=!!(window.claude&&window.claude.use);
 const ONLINE=!INVIEWER&&/^https?:$/.test(location.protocol);
 if(!INVIEWER)document.documentElement.classList.add("standalone");
+// Offline: a service worker (sw.js, next to index.html on GitHub) keeps a copy of the game on the device.
+if(ONLINE&&"serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 const QS=new URLSearchParams(location.search);
 const ROLE=QS.get("p")?"player":(QS.get("c")?"chrono":"host");
 const ROOM=String(QS.get("p")||QS.get("c")||"").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,6);
@@ -2265,7 +2267,7 @@ function start(data){
 /* ---------- auto update ----------
    On launch and each time the app comes back to the screen, it checks GitHub for a newer
    index.html and reloads itself (never in the middle of a turn). No need to redo the bookmark. */
-const VERSION="v1.29";
+const VERSION="v1.30";
 let newVer=null;
 function calmToReload(){
   if(ROLE!=="host")return !(pn.tick&&pn.tick.me&&pn.tick.screen==="turn");
