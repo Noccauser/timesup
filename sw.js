@@ -2,11 +2,11 @@
    - The game page: internet first (so updates still arrive), the saved copy if there is no connection
      or if it takes more than 4 seconds.
    - Icon, fonts and libraries: the saved copy first, refreshed in the background. */
-const CACHE = "tu-nocca-v1";
+const CACHE = "tu-nocca-v2";
 const PAGE = "./";
 const PRECACHE = ["./", "./icon.png"];
 const LIBS = [
-  "https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js",
+  "https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js",
   "https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"
 ];
 const CDN_HOSTS = ["cdn.jsdelivr.net", "fonts.googleapis.com", "fonts.gstatic.com"];

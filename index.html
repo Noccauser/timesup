@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<!-- Time's Up nocca · v1.31 -->
+<!-- Time's Up nocca · v1.32 -->
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1B2A8C">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -593,7 +593,7 @@ textarea.field{min-height:130px;padding:12px 14px;resize:vertical;line-height:1.
 
 <div id="app"></div>
 <div id="adm"></div>
-<div class="ver" id="ver" aria-hidden="true">v1.31</div>
+<div class="ver" id="ver" aria-hidden="true">v1.32</div>
 <div class="upd" id="upd" hidden>Mise à jour…</div>
 
 <script>
@@ -616,24 +616,13 @@ const QS=new URLSearchParams(location.search);
 const ROLE=QS.get("p")?"player":(QS.get("c")?"chrono":"host");
 const ROOM=String(QS.get("p")||QS.get("c")||"").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,6);
 const PEER_PREFIX="tumaison-v1-";
-/* Phones on 4G/5G can't reach the tablet directly (their network blocks it): the connection then goes through
-   a relay (TURN). Open Relay is a free relay; its password is computed here from its public secret, valid 24 h. */
-const TURN_HOST="staticauth.openrelay.metered.ca",TURN_SECRET="openrelayprojectsecret";
-let iceCache=null;
-async function iceConfig(){
-  if(iceCache&&Date.now()-iceCache.at<12*3600e3)return iceCache.cfg;
-  const ice=[{urls:["stun:stun.l.google.com:19302","stun:stun1.l.google.com:19302"]}];
-  try{
-    const user=Math.floor(Date.now()/1000+24*3600)+":tumaison";
-    const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(TURN_SECRET),{name:"HMAC",hash:"SHA-1"},false,["sign"]);
-    const sig=new Uint8Array(await crypto.subtle.sign("HMAC",key,new TextEncoder().encode(user)));
-    const pass=btoa(String.fromCharCode(...sig));
-    ice.push({urls:["turn:"+TURN_HOST+":80","turn:"+TURN_HOST+":80?transport=tcp","turn:"+TURN_HOST+":443","turns:"+TURN_HOST+":443?transport=tcp"],username:user,credential:pass});
-  }catch(e){}
-  iceCache={at:Date.now(),cfg:{iceServers:ice}};
-  return iceCache.cfg;
-}
-const LIBS={peer:"https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js",qr:"https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"};
+/* Tablet <-> phones go through a public MQTT message server (like a chat room on the internet):
+   each device connects to it on its own, so it works on wifi, 4G and 5G alike, as long as there is internet.
+   Two free servers, no account; the tablet listens on both, a phone uses the first one that answers. */
+const RELAY_BROKERS=QS.get("mq")?[QS.get("mq")]:["wss://broker.hivemq.com:8884/mqtt","wss://broker.emqx.io:8084/mqtt"];
+const RELAY_ROOT="tumaison/v2/";
+const RELAY_PING=5000,RELAY_LOST=20000;
+const LIBS={mqtt:"https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js",qr:"https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"};
 const loaded={};
 function loadScript(src){
   if(loaded[src])return loaded[src];
@@ -1457,8 +1446,7 @@ async function hostStart(){
   loadScript(LIBS.qr).then(rerenderNet).catch(()=>{});
   if(net.peer)return;
   net.status="connecting";
-  try{await loadScript(LIBS.peer)}catch(e){net.status="error";net.err="Module de connexion introuvable. Vérifie internet.";rerenderNet();return}
-  await iceConfig();
+  try{await loadScript(LIBS.mqtt)}catch(e){net.status="error";net.err="Module de connexion introuvable. Vérifie internet.";rerenderNet();return}
   openHostPeer();
 }
 function reopenHost(delay){
@@ -1473,38 +1461,62 @@ function newRoomCode(){
   if(state.lobby)Object.values(state.lobby.players).forEach(p=>p.online=false);
   save();reopenHost(300);render();
 }
+function relayId(){return "tu"+Math.random().toString(36).slice(2,12)}
+function relayPub(client,topic,msg){try{if(client&&client.connected)client.publish(topic,JSON.stringify(msg),{qos:0})}catch(e){}}
+function relayConnect(url,id,opts,onUp,onMsg,onDown){
+  const c=mqtt.connect(url,Object.assign({clientId:id,clean:true,keepalive:20,reconnectPeriod:3000,connectTimeout:8000,protocolVersion:4},opts||{}));
+  c.on("connect",()=>onUp(c));
+  c.on("message",(t,buf)=>{let m;try{m=JSON.parse(typeof buf==="string"?buf:new TextDecoder().decode(buf))}catch(e){return}if(m&&typeof m==="object")onMsg(c,m)});
+  c.on("offline",()=>onDown&&onDown(c));
+  c.on("error",()=>{});
+  return c;
+}
+/* The tablet: one inbox per room, a "connection" per phone (same shape the rest of the code already uses). */
 function openHostPeer(){
-  if(net.peer||!window.Peer||yielded)return;
-  const peer=new Peer(PEER_PREFIX+state.code,{debug:0,config:iceCache?iceCache.cfg:undefined});
-  net.peer=peer;
-  peer.on("open",()=>{net.status="on";net.retries=0;rerenderNet()});
-  peer.on("connection",conn=>{
-    conn.on("open",()=>{net.conns.set(conn.peer,{conn,pid:null});sendTo(conn,hostConfig());sendTo(conn,tickMsg());rerenderNet()});
-    conn.on("data",d=>onHostData(conn,d));
-    conn.on("close",()=>{
-      const c=net.conns.get(conn.peer);
-      if(c&&c.pid&&state.lobby&&state.lobby.players[c.pid])state.lobby.players[c.pid].online=false;
-      net.conns.delete(conn.peer);
-      // The phone holding the cards dropped: stop the chrono and let the tablet decide (wait for it, or play on the tablet).
-      const t=state.turn;
-      if(c&&state.screen==="turn"&&t&&t.onPhone&&t.giver===c.pid&&!pidOnline(c.pid)){pauseTurn();render();return}
-      rerenderNet();
-    });
-    conn.on("error",()=>{});
-  });
-  peer.on("disconnected",()=>{try{peer.reconnect()}catch(e){}});
-  peer.on("error",e=>{
-    if(e.type==="peer-unavailable")return;
-    // Code still held by an old session: retry a few times (it frees up after a reload), then switch to a new code.
-    if(e.type==="unavailable-id"){
-      net.retries++;net.status="connecting";
-      if(net.retries<=4)reopenHost(3000);else newRoomCode();
-      return;
-    }
-    net.status="error";net.err="Connexion perdue, nouvel essai…";
-    rerenderNet();
-    reopenHost(4000);
-  });
+  if(net.peer||!window.mqtt||yielded)return;
+  const code=state.code,inbox=RELAY_ROOT+code+"/h",id=relayId();
+  const R={clients:[],destroy(){clearInterval(R.timer);R.dead=true;R.clients.forEach(c=>{try{c.end(true)}catch(e){}});R.clients=[]}};
+  net.peer=R;net.status="connecting";
+  const upd=()=>{if(net.peer!==R)return;const up=R.clients.some(c=>c.connected);const st=up?"on":"connecting";if(net.status!==st){net.status=st;rerenderNet()}};
+  RELAY_BROKERS.forEach((url,i)=>R.clients.push(relayConnect(url,id+"h"+i,null,
+    c=>{c.subscribe(inbox,{qos:0});net.retries=0;upd()},
+    (c,m)=>hostRelayMsg(c,m,code),
+    ()=>upd())));
+  R.timer=setInterval(()=>{
+    if(net.peer!==R)return;
+    const now=Date.now();
+    net.conns.forEach((x,k)=>{if(now-x.conn.seen>RELAY_LOST)hostLost(k);else relayPub(x.conn.via,x.conn.topic,{k:"ping"})});
+    upd();
+  },RELAY_PING);
+  setTimeout(()=>{if(net.peer===R&&!R.clients.some(c=>c.connected)){net.status="error";net.err="Impossible de joindre le serveur de connexion. Vérifie internet.";rerenderNet()}},12000);
+}
+function hostRelayMsg(client,m,code){
+  if(!m.f||typeof m.f!=="string"||ROLE!=="host")return;
+  let x=net.conns.get(m.f);
+  if(m.k==="bye"){if(x)hostLost(m.f);return}
+  if(!x){
+    const conn={peer:m.f,open:true,via:client,seen:Date.now(),topic:RELAY_ROOT+code+"/c/"+m.f,
+      send(msg){relayPub(conn.via,conn.topic,{k:"d",d:msg})}};
+    x={conn,pid:null};net.conns.set(m.f,x);
+    // A phone the tablet does not know yet (the tablet was reloaded): ask it to introduce itself again.
+    if(m.k!=="hi")relayPub(client,conn.topic,{k:"who"});
+    sendTo(conn,hostConfig());sendTo(conn,tickMsg());rerenderNet();
+  }else{
+    x.conn.via=client;x.conn.seen=Date.now();
+    // The phone came back (screen unlocked, network switched): give it the full picture again.
+    if(m.k==="hi"){sendTo(x.conn,hostConfig());sendTo(x.conn,tickMsg(x.pid))}
+  }
+  if(m.k==="d"&&m.d&&typeof m.d==="object")onHostData(x.conn,m.d);
+}
+function hostLost(key){
+  const c=net.conns.get(key);if(!c)return;
+  c.conn.open=false;
+  if(c.pid&&state.lobby&&state.lobby.players[c.pid])state.lobby.players[c.pid].online=false;
+  net.conns.delete(key);
+  // The phone holding the cards dropped: stop the chrono and let the tablet decide (wait for it, or play on the tablet).
+  const t=state.turn;
+  if(state.screen==="turn"&&t&&t.onPhone&&t.giver===c.pid&&!pidOnline(c.pid)){pauseTurn();render();return}
+  rerenderNet();
 }
 // Re-render the tablet when phones come and go, on the screens that show who is connected.
 function rerenderNet(){
@@ -2162,38 +2174,49 @@ function onPhoneData(d){
   }
 }
 async function phoneConnect(){
-  try{await loadScript(LIBS.peer)}catch(e){pn.status="error";prender();setTimeout(phoneConnect,4000);return}
-  await iceConfig();
+  try{await loadScript(LIBS.mqtt)}catch(e){pn.status="error";prender();setTimeout(phoneConnect,4000);return}
   openPhonePeer();
 }
+/* The phone: its own inbox, says hello to the tablet until it answers, then pings so the tablet knows it is still there. */
 function openPhonePeer(){
-  const peer=new Peer({debug:0,config:iceCache?iceCache.cfg:undefined});pn.peer=peer;
-  peer.on("open",connectHost);
-  peer.on("disconnected",()=>{try{peer.reconnect()}catch(e){}});
-  peer.on("error",e=>{
-    if(e.type==="peer-unavailable"){pn.status="nohost";pn.miss=(pn.miss||0)+1;prender();setTimeout(connectHost,3000);return}
-    if(["network","server-error","socket-error","socket-closed"].includes(e.type)){
-      pn.status="error";prender();try{peer.destroy()}catch(_){}
-      pn.peer=null;setTimeout(openPhonePeer,4000);
-    }
-  });
+  if(pn.peer)return;
+  const id=pn.rid||(pn.rid=relayId()),inbox=RELAY_ROOT+ROOM+"/c/"+id,out=RELAY_ROOT+ROOM+"/h";
+  const conn={open:false,send(msg){relayPub(pn.peer,out,{f:id,k:"d",d:msg})}};
+  pn.conn=conn;pn.status="connecting";
+  let bi=pn.broker||0;
+  const start=()=>{
+    const url=RELAY_BROKERS[bi%RELAY_BROKERS.length];
+    // If the phone vanishes (page closed, phone off), the server tells the tablet right away.
+    const c=relayConnect(url,id+"p"+bi,{will:{topic:out,payload:JSON.stringify({f:id,k:"bye"}),qos:0,retain:false}},
+      cl=>{cl.subscribe(inbox,{qos:0},()=>relayPub(cl,out,{f:id,k:"hi"}))},
+      (cl,m)=>phoneRelayMsg(m),
+      ()=>{if(conn.open){conn.open=false;pn.status="connecting";prender()}});
+    pn.peer=c;
+    // This server does not answer: try the other one.
+    setTimeout(()=>{if(pn.peer===c&&!c.connected&&RELAY_BROKERS.length>1){try{c.end(true)}catch(e){}bi++;pn.broker=bi;start()}},9000);
+  };
+  start();
+  clearInterval(pn.relayT);
+  pn.relayT=setInterval(()=>{
+    const c=pn.peer;if(!c||!c.connected)return;
+    if(conn.open&&Date.now()-(pn.lastHost||0)>RELAY_LOST){conn.open=false;pn.status="nohost";prender()}
+    relayPub(c,out,{f:id,k:conn.open?"ping":"hi"});
+  },conn.open?RELAY_PING:3000);
 }
-function connectHost(){
-  if(!pn.peer||pn.peer.destroyed||!pn.peer.open)return;
-  if(pn.conn&&pn.conn.open)return;
-  const conn=pn.peer.connect(PEER_PREFIX+ROOM,{reliable:true});pn.conn=conn;
-  conn.on("open",()=>{
-    pn.status="on";pn.miss=0;
+function phoneRelayMsg(m){
+  const conn=pn.conn;if(!conn)return;
+  pn.lastHost=Date.now();
+  if(m.k==="who")conn.open=false;
+  if(!conn.open){
+    conn.open=true;pn.status="on";pn.miss=0;
     // Always say hello first so the tablet knows which player this phone is (needed for phone turns).
     if(ROLE!=="chrono")psend({t:"hello"});
     if(ROLE==="chrono")psend({t:"chrono"});
     else if(ph.step==="sent")sendWords();
     else if(ph.step!=="name")psend({t:"progress",n:ph.picks.length});
     prender();
-  });
-  conn.on("data",onPhoneData);
-  conn.on("close",()=>{if(pn.conn===conn){pn.conn=null;pn.status="connecting";prender();setTimeout(connectHost,2000)}});
-  conn.on("error",()=>{});
+  }
+  if(m.k==="d"&&m.d&&typeof m.d==="object")onPhoneData(m.d);
 }
 function phoneBoot(){
   state={settings:{sound:true}};
@@ -2286,7 +2309,7 @@ function start(data){
 /* ---------- auto update ----------
    On launch and each time the app comes back to the screen, it checks GitHub for a newer
    index.html and reloads itself (never in the middle of a turn). No need to redo the bookmark. */
-const VERSION="v1.31";
+const VERSION="v1.32";
 let newVer=null;
 function calmToReload(){
   if(ROLE!=="host")return !(pn.tick&&pn.tick.me&&pn.tick.screen==="turn");
