@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<!-- Time's Up nocca · v1.33 -->
+<!-- Time's Up nocca · v1.34 -->
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1B2A8C">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -198,8 +198,10 @@ svg{display:block}
 .net{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:.9rem;color:var(--muted)}
 .net i{width:10px;height:10px;border-radius:50%;background:var(--sun)}
 .net.on i{background:var(--mint)}
-.net.err{color:var(--tomato)}
-.net.err i{background:var(--tomato)}
+.net.bad{color:var(--tomato)}
+.net.bad i{background:var(--tomato)}
+.net.fresh{color:var(--sun)}
+.net.fresh i{background:var(--sun)}
 
 /* Phone */
 .phone{flex:1;width:100%;max-width:480px;margin:0 auto;display:flex;flex-direction:column;gap:18px;padding-block:8px}
@@ -608,7 +610,7 @@ textarea.field{min-height:130px;padding:12px 14px;resize:vertical;line-height:1.
 
 <div id="app"></div>
 <div id="adm"></div>
-<div class="ver" id="ver" aria-hidden="true">v1.33</div>
+<div class="ver" id="ver" aria-hidden="true">v1.34</div>
 <div class="upd" id="upd" hidden>Mise à jour…</div>
 
 <script>
@@ -864,9 +866,9 @@ function vSetup(){
 
 function netBadge(){
   const st=net.status,n=net.conns.size;
-  const changed=ui.codeChanged?`<span class="net err" style="display:block;margin-top:6px"><i></i>Nouveau code de salle : rescannez le QR code</span>`:"";
+  const changed=ui.codeChanged?`<span class="net fresh" style="display:block;margin-top:6px"><i></i>Nouveau code : les téléphones déjà connectés doivent rescanner le QR code</span>`:"";
   if(st==="on")return `<span class="net on"><i></i>Salle ouverte · ${plural(n,"téléphone")} connecté${n>1?"s":""}</span>${changed}`;
-  if(st==="error")return `<span class="net err"><i></i>${esc(net.err||"Connexion impossible")}</span>`;
+  if(st==="error")return `<span class="net bad"><i></i>${esc(net.err||"Connexion impossible")}</span>`;
   return `<span class="net"><i></i>Ouverture de la salle…</span>`;
 }
 function joinUrl(role){return location.origin+location.pathname+"?"+role+"="+state.code}
@@ -1947,7 +1949,7 @@ function pStatus(){
   const st=pn.status;
   if(st==="on")return `<span class="net on"><i></i>Connecté à la partie ${esc(ROOM)}</span>`;
   if(st==="nohost")return `<span class="net"><i></i>On cherche la tablette ${esc(ROOM)}…</span>${(pn.miss||0)>=4?`<p class="hint" style="margin-top:6px">La tablette ne répond pas. Vérifie qu'elle affiche bien le jeu. Si le code affiché sur la tablette n'est plus ${esc(ROOM)}, rescanne le QR code.</p>`:""}`;
-  if(st==="error")return `<span class="net err"><i></i>Connexion perdue, nouvel essai…</span>`;
+  if(st==="error")return `<span class="net bad"><i></i>Connexion perdue, nouvel essai…</span>`;
   return `<span class="net"><i></i>Connexion…</span>`;
 }
 function vPhone(){
@@ -2325,7 +2327,7 @@ function start(data){
 /* ---------- auto update ----------
    On launch and each time the app comes back to the screen, it checks GitHub for a newer
    index.html and reloads itself (never in the middle of a turn). No need to redo the bookmark. */
-const VERSION="v1.33";
+const VERSION="v1.34";
 let newVer=null;
 function calmToReload(){
   if(ROLE!=="host")return !(pn.tick&&pn.tick.me&&pn.tick.screen==="turn");
