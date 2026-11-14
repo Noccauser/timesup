@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<!-- Time's Up nocca · v1.25 -->
+<!-- Time's Up nocca · v1.26 -->
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1B2A8C">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -283,26 +283,46 @@ textarea.field{min-height:130px;padding:12px 14px;resize:vertical;line-height:1.
 .start{min-height:76px;font-size:1.8rem;width:100%}
 .setup .topbar .t-label{flex:1;text-align:center}
 /* Welcome */
-.home{flex:1;width:100%;max-width:760px;margin:0 auto;display:flex;flex-direction:column;justify-content:space-evenly;align-items:center;gap:clamp(18px,4vh,40px);text-align:center;padding-block:clamp(8px,3vh,40px)}
-.home-main{display:flex;flex-direction:column;align-items:center;gap:clamp(12px,2.4vh,22px)}
+.home{flex:1;width:100%;max-width:760px;margin:0 auto;display:flex;flex-direction:column;justify-content:space-evenly;align-items:center;gap:clamp(14px,3vh,36px);text-align:center;padding-block:clamp(8px,3vh,40px)}
+.home-main{display:flex;flex-direction:column;align-items:center;gap:clamp(10px,2vh,18px)}
 .stamp-inline{display:inline-block;transform:rotate(-7deg);background:var(--sun);color:var(--ink);font-size:.55em;padding:2px 10px;border-radius:8px;vertical-align:middle;box-shadow:0 3px 0 rgba(6,10,50,.4)}
-.home-logo .logo-main{font-size:clamp(3.8rem,15vw,7.5rem)}
-.home-logo .stamp{right:clamp(-20px,-1.8vw,-12px);bottom:clamp(-20px,-1.8vw,-12px);font-size:clamp(1.1rem,2.6vw,1.6rem);padding:4px 14px}
-.home .tagline{margin-top:14px;font-size:clamp(1.05rem,3vw,1.25rem);max-width:32ch}
-/* The three rounds, as three little cards from the same deck as the game card (paper, dashed inner line). */
-.home-cards{display:flex;justify-content:center;align-items:flex-end;gap:clamp(8px,2.4vw,16px);margin-top:6px}
-.hc{position:relative;width:clamp(88px,23vw,128px);aspect-ratio:4/5;background:var(--paper);color:var(--ink);border-radius:16px;
-  box-shadow:0 6px 0 rgba(6,10,50,.4);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(4px,1vw,8px);padding:14px 6px 10px;transform:rotate(var(--r)) translateY(var(--y))}
+.home .tagline{margin-top:0;font-size:clamp(1rem,2.8vw,1.2rem);max-width:30ch}
+
+/* Hero: the cards sit behind the logo; their lower part fades out (mask) so the logo reads cleanly over them. */
+.home-hero{--cw:clamp(86px,23vw,132px);--ch:calc(var(--cw)*1.25);position:relative;display:flex;flex-direction:column;align-items:center}
+.hero-cards{position:relative;z-index:0;display:flex;justify-content:center;align-items:flex-end;gap:clamp(6px,2vw,14px);
+  height:calc(var(--ch) + 30px);padding:0 30px;margin:0 -30px;
+  -webkit-mask-image:linear-gradient(to bottom,#000 0,#000 54%,transparent 80%);mask-image:linear-gradient(to bottom,#000 0,#000 54%,transparent 80%)}
+.hc{position:relative;flex:none;width:var(--cw);height:var(--ch);background:var(--paper);color:var(--ink);border-radius:16px;
+  box-shadow:0 6px 0 rgba(6,10,50,.35);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:clamp(5px,1.2vw,9px);padding:calc(var(--ch)*.19) 6px 0;
+  transform:translateY(var(--y)) rotate(var(--r));transform-origin:50% 100%}
 .hc::before{content:"";position:absolute;inset:6px;border:2px dashed rgba(20,26,58,.14);border-radius:11px;pointer-events:none}
-.hc i{position:absolute;left:-7px;top:-9px;font-style:normal;width:32px;height:32px;border-radius:50%;background:var(--c);color:var(--ink);border:3px solid var(--paper);display:grid;place-items:center;font-family:var(--display);font-size:1rem;box-shadow:0 3px 0 rgba(6,10,50,.35)}
-.hc svg{width:48%;height:auto;color:var(--ink)}
-.hc b{font-family:var(--display);font-weight:400;font-size:clamp(.85rem,2.5vw,1.1rem);line-height:1.05}
-.hc1{--r:-5deg;--y:5px;--c:var(--sun)}
-.hc2{--r:0deg;--y:-5px;--c:var(--mint)}
-.hc3{--r:5deg;--y:5px;--c:var(--tomato)}
+.hc i{position:absolute;left:-6px;top:-8px;font-style:normal;width:30px;height:30px;border-radius:50%;background:var(--c);color:var(--ink);border:3px solid var(--paper);display:grid;place-items:center;font-family:var(--display);font-size:.95rem;box-shadow:0 3px 0 rgba(6,10,50,.3)}
+.hc b{font-family:var(--display);font-weight:400;font-size:clamp(.82rem,2.4vw,1.08rem);line-height:1.05}
+.hc svg{width:38%;height:auto;color:var(--ink)}
+.hc1{--r:-8deg;--y:8px;--c:var(--sun)}
+.hc2{--r:0deg;--y:-6px;--c:var(--mint)}
+.hc3{--r:8deg;--y:8px;--c:var(--tomato)}
 .hc3 i{color:#fff}
+.home-logo{position:relative;z-index:1;margin:calc(var(--ch)*-.34) 0 0;font-weight:400}
+.home-logo .logo-main{display:block;font-size:clamp(3.8rem,15vw,7.5rem)}
+.home-logo .stamp{right:clamp(-20px,-1.8vw,-12px);bottom:clamp(-20px,-1.8vw,-12px);font-size:clamp(1.1rem,2.6vw,1.6rem);padding:4px 14px}
+
+/* Arrival animation: cards rise from behind the logo one after the other, then the stamp lands. */
+.home.intro .hc{animation:hcRise .7s cubic-bezier(.2,.9,.3,1.12) both;animation-delay:var(--d)}
+.home.intro .hc1{--d:.08s} .home.intro .hc2{--d:.2s} .home.intro .hc3{--d:.32s}
+@keyframes hcRise{from{transform:translateY(calc(var(--ch) + 30px)) rotate(0deg)}to{transform:translateY(var(--y)) rotate(var(--r))}}
+.home.intro .logo-main{animation:logoIn .45s ease-out both,logoThump .28s ease-out 1.38s}
+@keyframes logoIn{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}
+@keyframes logoThump{40%{transform:scale(.97) translateY(2px)}}
+.home.intro .home-logo .stamp{animation:stampLand .5s cubic-bezier(.3,1.35,.5,1) 1.05s both}
+@keyframes stampLand{0%{opacity:0;transform:translateY(-110px) rotate(-28deg) scale(1.9)}60%{opacity:1;transform:translateY(5px) rotate(-5deg) scale(.9)}100%{opacity:1;transform:rotate(-7deg)}}
+.home.intro .tagline,.home.intro .home-actions{animation:softIn .5s ease-out .25s both}
+@keyframes softIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.home.intro .hc,.home.intro .logo-main,.home.intro .home-logo .stamp,.home.intro .tagline,.home.intro .home-actions{animation:none}}
+
 .home-actions{width:100%;max-width:400px;display:flex;flex-direction:column;align-items:center;gap:6px}
-.disc-wrap.home-disc{width:min(62vw,32vh,360px);margin-bottom:clamp(18px,3.4vh,34px)}
+.disc-wrap.home-disc{width:min(62vw,32vh,360px);margin-bottom:clamp(14px,3vh,30px)}
 .home-disc .disc{width:78%;padding:10px}
 .home-disc .disc strong{font-size:clamp(2.2rem,min(9vw,5.6vh),3.6rem)}
 @media (orientation:landscape) and (min-width:900px){
@@ -480,7 +500,10 @@ textarea.field{min-height:130px;padding:12px 14px;resize:vertical;line-height:1.
 }
 
 /* duo */
-.home-duo{width:100%;min-height:64px;flex-direction:column;gap:0;line-height:1.1;font-size:1.3rem}
+.home-duo{width:100%;min-height:68px;flex-direction:row;justify-content:center;gap:14px;line-height:1.1;font-size:1.3rem;padding:10px 18px}
+.duo-ico{flex:none;width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.1);display:grid;place-items:center;color:var(--sun)}
+.duo-ico svg{width:28px;height:28px}
+.duo-txt{display:flex;flex-direction:column;align-items:flex-start;text-align:left}
 .home-duo small{font-family:var(--body,inherit);font-size:.85rem;opacity:.7;font-weight:600}
 .duo-hero{text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;margin:4px 0 6px}
 .duo-rule{font-size:clamp(1rem,3vw,1.2rem);color:var(--muted);line-height:1.5}
@@ -556,7 +579,7 @@ textarea.field{min-height:130px;padding:12px 14px;resize:vertical;line-height:1.
 
 <div id="app"></div>
 <div id="adm"></div>
-<div class="ver" id="ver" aria-hidden="true">v1.25</div>
+<div class="ver" id="ver" aria-hidden="true">v1.26</div>
 <div class="upd" id="upd" hidden>Mise à jour…</div>
 
 <script>
@@ -587,6 +610,7 @@ function cleanStr(v,max){return typeof v==="string"?v.replace(/[\u0000-\u001f<>]
 function cleanArr(v,n,max){return Array.isArray(v)?v.map(x=>cleanStr(x,max)).filter(Boolean).slice(0,n):[]}
 function makeCode(){const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";let s="";for(let i=0;i<4;i++)s+=a[Math.floor(Math.random()*a.length)];return s}
 const ICON={
+  duo:'<svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="11.5" cy="10" r="4.6" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M3 26.5c.6-5 4.1-8 8.5-8s7.9 3 8.5 8" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="21.5" cy="11" r="3.9" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M19.6 18.9c.6-.2 1.2-.3 1.9-.3 3.8 0 6.8 2.6 7.4 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>',
   qr:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M14 14h2.6v2.6H14zM17.4 17.4H20V20h-2.6z" fill="currentColor"/><path d="M18.7 14v1.3M14 18.7V20" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>',
   shuffle:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h3.2c2 0 3.3 1 4.4 2.7l2.8 4.6c1.1 1.7 2.4 2.7 4.4 2.7H21M3 17h3.2c1.5 0 2.6-.6 3.5-1.6M21 7h-3.2c-1.5 0-2.6.6-3.5 1.6M18 4l3 3-3 3M18 14l3 3-3 3" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   say:'<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M11 7h26a6 6 0 0 1 6 6v15a6 6 0 0 1-6 6H24l-9 8v-8h-4a6 6 0 0 1-6-6V13a6 6 0 0 1 6-6z" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linejoin="round"/><path d="M14 16.5h20M14 24.5h12" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/></svg>',
@@ -728,21 +752,24 @@ function board(){
 }
 function seg(group,val,on,label){return `<button data-act="${group}" data-v="${val}" aria-pressed="${on}">${label}</button>`}
 
-/* Welcome screen: the logo, the three rounds as small cards, one big round Play button (the same disc as every "Go"). */
+/* Welcome screen: the three rounds as cards tucked behind the logo, one big round Play button.
+   On each arrival the cards rise from behind the logo, then the "nocca" stamp lands (class "intro"). */
 function vHome(){
-  return `<div class="home">
+  return `<div class="home${ui.homeIntro?" intro":""}">
     <div class="home-main">
-      <div class="logo home-logo"><span class="logo-main">Time's Up</span><span class="stamp">nocca</span></div>
-      <p class="tagline">Faites deviner un max de cartes à votre équipe, en 3 manches.</p>
-      <div class="home-cards" aria-hidden="true">
-        <span class="hc hc1"><i>1</i>${ICON.say}<b>Décrivez</b></span>
-        <span class="hc hc2"><i>2</i>${ICON.one}<b>Un seul mot</b></span>
-        <span class="hc hc3"><i>3</i>${ICON.mime}<b>Mimez</b></span>
+      <div class="home-hero">
+        <div class="hero-cards" aria-hidden="true">
+          <span class="hc hc1"><i>1</i><b>Décrivez</b>${ICON.say}</span>
+          <span class="hc hc2"><i>2</i><b>Un seul mot</b>${ICON.one}</span>
+          <span class="hc hc3"><i>3</i><b>Mimez</b>${ICON.mime}</span>
+        </div>
+        <h1 class="logo home-logo"><span class="logo-main">Time's Up</span><span class="stamp">nocca</span></h1>
       </div>
+      <p class="tagline">Faites deviner un max de cartes à votre équipe, en 3 manches.</p>
     </div>
     <div class="home-actions">
       <div class="disc-wrap home-disc"><button class="disc" style="--team:var(--sun)" data-act="toSetup"><strong>Jouer</strong></button></div>
-      <button class="btn btn-ghost home-duo" data-act="toDuo">Mode duo<small>À deux, pour le classement</small></button>
+      <button class="btn btn-ghost home-duo" data-act="toDuo"><span class="duo-ico">${ICON.duo}</span><span class="duo-txt">Mode duo<small>À deux, pour le classement</small></span></button>
       <button class="link-btn" data-act="rules">Les règles</button>
     </div>
   </div>`;
@@ -1337,6 +1364,7 @@ setInterval(()=>{
 function render(){
   if(yielded)return;
   const s=state.screen;
+  ui.homeIntro=s==="home"&&ui.lastScreen!=="home";ui.lastScreen=s;
   app.className=(s==="turn"||s==="duoTurn")?"fill":(s==="lobby"?"scroll lobbymode":"scroll");
   const v={home:vHome,duoSetup:vDuoSetup,duoReady:vDuoReady,duoTurn:vDuoTurn,duoRecap:vDuoRecap,duoEnd:vDuoEnd,setup:vSetup,lobby:vLobby,roundIntro:vRoundIntro,ready:vReady,turn:vTurn,turnEnd:vTurnEnd,roundEnd:vRoundEnd,gameEnd:vGameEnd}[s]||vSetup;
   app.innerHTML=v()+(ui.menu?vMenu():"")+(ui.rules?vRules():"")+(ui.phones?vPhonesSheet():"");
@@ -2203,7 +2231,7 @@ function start(data){
 /* ---------- auto update ----------
    On launch and each time the app comes back to the screen, it checks GitHub for a newer
    index.html and reloads itself (never in the middle of a turn). No need to redo the bookmark. */
-const VERSION="v1.25";
+const VERSION="v1.26";
 let newVer=null;
 function calmToReload(){
   if(ROLE!=="host")return !(pn.tick&&pn.tick.me&&pn.tick.screen==="turn");
