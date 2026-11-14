@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<!-- Time's Up nocca · v1.27 -->
+<!-- Time's Up nocca · v1.28 -->
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1B2A8C">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -50,6 +50,11 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .waiting-dot{width:72px;height:72px;margin:0 auto;border-radius:50%;border:8px solid rgba(255,255,255,.15);border-top-color:var(--sun);animation:spin 1s linear infinite}
 #app.scroll{min-height:100%}
 #app.fill{height:100%;min-height:520px}
+/* Home is a fixed page: no vertical drag or rubber-band (the rules sheet keeps its own scroll). */
+html.lock,html.lock body{overflow:hidden}
+html.lock body{position:fixed;inset:0;width:100%}
+html.lock #app{height:100%;min-height:0;overflow:hidden;box-sizing:border-box}
+.overlay{overscroll-behavior:contain}
 h1,h2,h3{margin:0;font-weight:400;text-wrap:balance}
 p{margin:0}
 button{font:inherit;color:inherit}
@@ -304,6 +309,7 @@ textarea.field{min-height:130px;padding:12px 14px;resize:vertical;line-height:1.
 .hc2{--r:0deg;--y:-6px;--c:var(--mint);z-index:1;margin:0 calc(var(--cw)*-.05)}
 .hc3{--r:8deg;--y:8px;--c:var(--tomato)}
 .hc3 i{color:#fff}
+.hc2{padding-top:calc(var(--ch)*.27)}
 .home-logo{position:relative;z-index:1;margin:calc(var(--ch)*-.34) 0 0;font-weight:400}
 .home-logo .logo-main{display:block;font-size:clamp(3.8rem,15vw,7.5rem)}
 .home-logo .stamp{right:clamp(-20px,-1.8vw,-12px);bottom:clamp(-20px,-1.8vw,-12px);font-size:clamp(1.1rem,2.6vw,1.6rem);padding:4px 14px}
@@ -580,7 +586,7 @@ textarea.field{min-height:130px;padding:12px 14px;resize:vertical;line-height:1.
 
 <div id="app"></div>
 <div id="adm"></div>
-<div class="ver" id="ver" aria-hidden="true">v1.27</div>
+<div class="ver" id="ver" aria-hidden="true">v1.28</div>
 <div class="upd" id="upd" hidden>Mise à jour…</div>
 
 <script>
@@ -1366,6 +1372,7 @@ function render(){
   if(yielded)return;
   const s=state.screen;
   ui.homeIntro=s==="home"&&ui.lastScreen!=="home";ui.lastScreen=s;
+  document.documentElement.classList.toggle("lock",s==="home");
   app.className=(s==="turn"||s==="duoTurn")?"fill":(s==="lobby"?"scroll lobbymode":"scroll");
   const v={home:vHome,duoSetup:vDuoSetup,duoReady:vDuoReady,duoTurn:vDuoTurn,duoRecap:vDuoRecap,duoEnd:vDuoEnd,setup:vSetup,lobby:vLobby,roundIntro:vRoundIntro,ready:vReady,turn:vTurn,turnEnd:vTurnEnd,roundEnd:vRoundEnd,gameEnd:vGameEnd}[s]||vSetup;
   app.innerHTML=v()+(ui.menu?vMenu():"")+(ui.rules?vRules():"")+(ui.phones?vPhonesSheet():"");
@@ -2232,7 +2239,7 @@ function start(data){
 /* ---------- auto update ----------
    On launch and each time the app comes back to the screen, it checks GitHub for a newer
    index.html and reloads itself (never in the middle of a turn). No need to redo the bookmark. */
-const VERSION="v1.27";
+const VERSION="v1.28";
 let newVer=null;
 function calmToReload(){
   if(ROLE!=="host")return !(pn.tick&&pn.tick.me&&pn.tick.screen==="turn");
