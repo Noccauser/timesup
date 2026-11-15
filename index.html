@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<!-- Time's Up nocca · v1.35 -->
+<!-- Time's Up nocca · v1.36 -->
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1B2A8C">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -615,7 +615,7 @@ textarea.field{min-height:130px;padding:12px 14px;resize:vertical;line-height:1.
 
 <div id="app"></div>
 <div id="adm"></div>
-<div class="ver" id="ver" aria-hidden="true">v1.35</div>
+<div class="ver" id="ver" aria-hidden="true">v1.36</div>
 <div class="upd" id="upd" hidden>Mise à jour…</div>
 
 <script>
@@ -1414,7 +1414,6 @@ function render(){
   app.innerHTML=v()+(ui.menu?vMenu():"")+(ui.rules?vRules():"")+(ui.phones?vPhonesSheet():"");
   updateTimer();
   fitLock();
-  syncHistory();
   save();
   broadcastTick();
 }
@@ -1797,68 +1796,6 @@ document.addEventListener("click",e=>{
   if(e.target.closest("[data-stop]")&&el.matches(".overlay"))return;
   hostAct(el.dataset.act,el);
 });
-/* ---------- going back: swipe from the left edge (like most apps) or the browser's back ----------
-   Only on the setup screens; never during a game. */
-function backAct(){
-  if(ROLE!=="host"||!state)return null;
-  if(ui.rules)return "closeRules";
-  if(ui.menu)return "closeMenu";
-  return {setup:"toHome",duoSetup:"toHome",lobby:"lobbyBack"}[state.screen]||null;
-}
-function goBack(){const a=backAct();if(a){hostAct(a);return true}return false}
-// A history entry per setup screen, so Safari's own back swipe stays inside the game.
-let histScreen=null;
-function syncHistory(){
-  try{
-    // A first "root" entry behind everything: a back swipe on the home screen never leaves the game.
-    if(!histScreen&&!(history.state&&history.state.tu)){history.replaceState({tu:"root"},"");history.pushState({tu:"base"},"");histScreen="base"}
-    const key=backAct()?state.screen:"base";
-    if(key!==histScreen){
-      if(key==="base"||!histScreen)history.replaceState({tu:key},"");
-      else history.pushState({tu:key},"");
-      histScreen=key;
-    }
-  }catch(e){}
-}
-window.addEventListener("popstate",e=>{
-  const at=e.state&&e.state.tu;histScreen=null;
-  const did=goBack();
-  if(!did&&at==="root"){try{history.pushState({tu:"base"},"")}catch(err){}histScreen="base";return}
-  syncHistory();
-});
-(function edgeSwipe(){
-  let x0=0,y0=0,t0=0,on=false,dx=0;
-  const EDGE=28;
-  // Only for the app added to the iPhone/iPad home screen: there, iOS has no back swipe of its own.
-  // Everywhere else (Safari, Android) the system's back gesture already goes back through history (popstate).
-  const ios=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
-  if(!(ios&&navigator.standalone))return;
-  document.addEventListener("touchstart",e=>{
-    const t=e.touches[0];
-    on=e.touches.length===1&&t.clientX<=EDGE&&!!backAct();
-    if(!on)return;
-    x0=t.clientX;y0=t.clientY;t0=Date.now();dx=0;
-    app.style.transition="none";
-  },{passive:true});
-  document.addEventListener("touchmove",e=>{
-    if(!on)return;
-    const t=e.touches[0];dx=Math.max(0,t.clientX-x0);
-    if(Math.abs(t.clientY-y0)>dx*1.2&&dx<30){on=false;app.style.transform="";return}
-    app.style.transform=`translateX(${dx*.85}px)`;app.style.opacity=String(1-Math.min(.35,dx/innerWidth*.6));
-  },{passive:true});
-  const end=()=>{
-    if(!on)return;on=false;
-    const fast=dx>50&&(Date.now()-t0)<260;
-    app.style.transition="transform .2s ease-out,opacity .2s ease-out";
-    if(dx>innerWidth*.3||fast){
-      app.style.transform=`translateX(${innerWidth*.6}px)`;app.style.opacity="0";
-      setTimeout(()=>{app.style.transition="none";app.style.transform="translateX(-24px)";app.style.opacity="0";goBack();
-        requestAnimationFrame(()=>{app.style.transition="transform .22s ease-out,opacity .22s ease-out";app.style.transform="";app.style.opacity=""})},180);
-    }else{app.style.transform="";app.style.opacity=""}
-  };
-  document.addEventListener("touchend",end,{passive:true});
-  document.addEventListener("touchcancel",()=>{if(!on)return;on=false;app.style.transition="transform .2s ease-out,opacity .2s ease-out";app.style.transform="";app.style.opacity=""},{passive:true});
-})();
 /* Every tablet action, callable from a tap on the tablet or from the admin's phone */
 function hostAct(act,el){
   const s=state.settings;
@@ -2394,7 +2331,7 @@ function start(data){
 /* ---------- auto update ----------
    On launch and each time the app comes back to the screen, it checks GitHub for a newer
    index.html and reloads itself (never in the middle of a turn). No need to redo the bookmark. */
-const VERSION="v1.35";
+const VERSION="v1.36";
 let newVer=null;
 function calmToReload(){
   if(ROLE!=="host")return !(pn.tick&&pn.tick.me&&pn.tick.screen==="turn");
