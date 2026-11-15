@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<!-- Time's Up nocca · v1.34 -->
+<!-- Time's Up nocca · v1.35 -->
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1B2A8C">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -41,12 +41,14 @@ body{
   display:flex;flex-direction:column;
   padding-left:max(16px,env(safe-area-inset-left,0px));
   padding-right:max(16px,env(safe-area-inset-right,0px));
-  padding-block:14px;
+  padding-top:14px;
+  /* room under the content for the version number (bottom right) */
+  padding-bottom:calc(max(8px,env(safe-area-inset-bottom,0px)) + 24px);
 }
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .ver{position:fixed;right:max(10px,env(safe-area-inset-right,0px));bottom:max(8px,env(safe-area-inset-bottom,0px));z-index:60;pointer-events:none;
   font:700 .72rem/1 var(--body);letter-spacing:.06em;color:var(--muted);opacity:.55;font-variant-numeric:tabular-nums}
-.standalone #app{padding-top:max(14px,env(safe-area-inset-top,0px));padding-bottom:max(14px,env(safe-area-inset-bottom,0px))}
+.standalone #app{padding-top:max(14px,env(safe-area-inset-top,0px))}
 .waiting-dot{width:72px;height:72px;margin:0 auto;border-radius:50%;border:8px solid rgba(255,255,255,.15);border-top-color:var(--sun);animation:spin 1s linear infinite}
 #app.scroll{min-height:100%}
 #app.fill{height:100%;min-height:520px}
@@ -155,7 +157,7 @@ svg{display:block}
 .undo-btn{align-self:center;display:inline-flex;align-items:center;gap:8px;background:none;border:0;cursor:pointer;color:#8FA2F0;opacity:.75;
   font:inherit;font-weight:700;font-size:.95rem;padding:10px 12px;margin-top:6px;text-align:left}
 .undo-btn svg{width:20px;height:20px;flex:none}
-.undo-btn small{font-weight:600;opacity:.8;margin-left:4px}
+.undo-btn small{font-weight:600;opacity:.8;margin-left:4px;white-space:nowrap}
 .undo-btn:active{opacity:1}
 .plus-pop{position:fixed;left:50%;top:34%;z-index:80;pointer-events:none;font-family:var(--display);font-size:clamp(3.4rem,16vw,6rem);line-height:1;
   color:var(--team);-webkit-text-stroke:3px var(--paper);paint-order:stroke fill;text-shadow:0 6px 0 rgba(6,10,50,.45);animation:plus 1.5s cubic-bezier(.2,.9,.3,1) forwards}
@@ -593,6 +595,9 @@ textarea.field{min-height:130px;padding:12px 14px;resize:vertical;line-height:1.
 .duo-pass b{font-family:var(--display);font-weight:400;font-size:1.15em}
 .duo-action{font-size:clamp(3.2rem,14vw,6.2rem)}
 .duo-action.k0{color:var(--sun)} .duo-action.k1{color:var(--mint)} .duo-action.k2{color:#FF8A7A}
+/* Phone: a slightly smaller disc and tighter gaps, so the undo link stays clear of the bottom edge and the version number */
+@media (max-width:699px){.duo-ready{gap:16px}.duo-ready .disc-wrap{width:min(80vw,38vh,400px)}}
+@media (max-width:699px) and (max-height:700px){.duo-ready{gap:10px}.duo-ready .disc-wrap{width:min(80vw,32vh,400px)}}
 .duo-facts{margin:0;display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
 .duo-facts span{background:rgba(255,255,255,.1);border-radius:999px;padding:7px 14px;font-weight:700;font-size:.98rem}
 .duo-hud{justify-content:space-between}
@@ -610,7 +615,7 @@ textarea.field{min-height:130px;padding:12px 14px;resize:vertical;line-height:1.
 
 <div id="app"></div>
 <div id="adm"></div>
-<div class="ver" id="ver" aria-hidden="true">v1.34</div>
+<div class="ver" id="ver" aria-hidden="true">v1.35</div>
 <div class="upd" id="upd" hidden>Mise à jour…</div>
 
 <script>
@@ -773,8 +778,7 @@ function availText(){
 
 /* ---------- views ---------- */
 function topbar(label){
-  const warn=ui.codeChanged&&state.lobby&&state.screen!=="lobby"?`<button class="link-btn" style="color:var(--sun);padding:4px" data-act="phones">Nouveau code de salle : les téléphones doivent rescanner</button>`:"";
-  return `<div class="topbar"><span class="t-label">${label}</span>${warn}<button class="icon-btn" data-act="menu">Menu</button></div>`;
+  return `<div class="topbar"><span class="t-label">${label}</span><button class="icon-btn" data-act="menu">Menu</button></div>`;
 }
 function board(){
   const totals=state.teams.map((_,i)=>total(i)),max=Math.max(...totals);
@@ -1243,7 +1247,7 @@ function vDuoReady(){
     :k===1?[plural(n,"carte")+" à refaire","60 secondes","Un seul essai par carte"]
     :[plural(n,"carte")+" à refaire","60 secondes","Sans parler"];
   return `<div class="topbar"><span class="t-label duo-top">${duoDots(d)}<span>Manche ${d.round}/4${d.round>1?` · ${plural(total,"point")}`:""}</span></span><button class="icon-btn" data-act="duoPause">Pause</button></div>
-  <div class="center-col">
+  <div class="center-col duo-ready">
     ${d.round>1?`<p class="duo-pass">Passe la tablette à <b>${esc(g)}</b></p>`:""}
     <div class="titles"><h1 class="mega duo-action k${k}">${R.title}</h1><p class="duo-who">${esc(g)} fait deviner à ${esc(o)}</p></div>
     <p class="duo-facts">${facts.map(f=>`<span>${f}</span>`).join("")}</p>
@@ -1410,6 +1414,7 @@ function render(){
   app.innerHTML=v()+(ui.menu?vMenu():"")+(ui.rules?vRules():"")+(ui.phones?vPhonesSheet():"");
   updateTimer();
   fitLock();
+  syncHistory();
   save();
   broadcastTick();
 }
@@ -1515,7 +1520,7 @@ function hostRelayMsg(client,m,code){
   if(!x){
     const conn={peer:m.f,open:true,via:client,seen:Date.now(),topic:RELAY_ROOT+code+"/c/"+m.f,
       send(msg){relayPub(conn.via,conn.topic,{k:"d",d:msg})}};
-    x={conn,pid:null};net.conns.set(m.f,x);
+    x={conn,pid:null};net.conns.set(m.f,x);ui.codeChanged=false;
     // A phone the tablet does not know yet (the tablet was reloaded): ask it to introduce itself again.
     if(m.k!=="hi")relayPub(client,conn.topic,{k:"who"});
     sendTo(conn,hostConfig());sendTo(conn,tickMsg());rerenderNet();
@@ -1792,6 +1797,68 @@ document.addEventListener("click",e=>{
   if(e.target.closest("[data-stop]")&&el.matches(".overlay"))return;
   hostAct(el.dataset.act,el);
 });
+/* ---------- going back: swipe from the left edge (like most apps) or the browser's back ----------
+   Only on the setup screens; never during a game. */
+function backAct(){
+  if(ROLE!=="host"||!state)return null;
+  if(ui.rules)return "closeRules";
+  if(ui.menu)return "closeMenu";
+  return {setup:"toHome",duoSetup:"toHome",lobby:"lobbyBack"}[state.screen]||null;
+}
+function goBack(){const a=backAct();if(a){hostAct(a);return true}return false}
+// A history entry per setup screen, so Safari's own back swipe stays inside the game.
+let histScreen=null;
+function syncHistory(){
+  try{
+    // A first "root" entry behind everything: a back swipe on the home screen never leaves the game.
+    if(!histScreen&&!(history.state&&history.state.tu)){history.replaceState({tu:"root"},"");history.pushState({tu:"base"},"");histScreen="base"}
+    const key=backAct()?state.screen:"base";
+    if(key!==histScreen){
+      if(key==="base"||!histScreen)history.replaceState({tu:key},"");
+      else history.pushState({tu:key},"");
+      histScreen=key;
+    }
+  }catch(e){}
+}
+window.addEventListener("popstate",e=>{
+  const at=e.state&&e.state.tu;histScreen=null;
+  const did=goBack();
+  if(!did&&at==="root"){try{history.pushState({tu:"base"},"")}catch(err){}histScreen="base";return}
+  syncHistory();
+});
+(function edgeSwipe(){
+  let x0=0,y0=0,t0=0,on=false,dx=0;
+  const EDGE=28;
+  // Only for the app added to the iPhone/iPad home screen: there, iOS has no back swipe of its own.
+  // Everywhere else (Safari, Android) the system's back gesture already goes back through history (popstate).
+  const ios=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+  if(!(ios&&navigator.standalone))return;
+  document.addEventListener("touchstart",e=>{
+    const t=e.touches[0];
+    on=e.touches.length===1&&t.clientX<=EDGE&&!!backAct();
+    if(!on)return;
+    x0=t.clientX;y0=t.clientY;t0=Date.now();dx=0;
+    app.style.transition="none";
+  },{passive:true});
+  document.addEventListener("touchmove",e=>{
+    if(!on)return;
+    const t=e.touches[0];dx=Math.max(0,t.clientX-x0);
+    if(Math.abs(t.clientY-y0)>dx*1.2&&dx<30){on=false;app.style.transform="";return}
+    app.style.transform=`translateX(${dx*.85}px)`;app.style.opacity=String(1-Math.min(.35,dx/innerWidth*.6));
+  },{passive:true});
+  const end=()=>{
+    if(!on)return;on=false;
+    const fast=dx>50&&(Date.now()-t0)<260;
+    app.style.transition="transform .2s ease-out,opacity .2s ease-out";
+    if(dx>innerWidth*.3||fast){
+      app.style.transform=`translateX(${innerWidth*.6}px)`;app.style.opacity="0";
+      setTimeout(()=>{app.style.transition="none";app.style.transform="translateX(-24px)";app.style.opacity="0";goBack();
+        requestAnimationFrame(()=>{app.style.transition="transform .22s ease-out,opacity .22s ease-out";app.style.transform="";app.style.opacity=""})},180);
+    }else{app.style.transform="";app.style.opacity=""}
+  };
+  document.addEventListener("touchend",end,{passive:true});
+  document.addEventListener("touchcancel",()=>{if(!on)return;on=false;app.style.transition="transform .2s ease-out,opacity .2s ease-out";app.style.transform="";app.style.opacity=""},{passive:true});
+})();
 /* Every tablet action, callable from a tap on the tablet or from the admin's phone */
 function hostAct(act,el){
   const s=state.settings;
@@ -2327,7 +2394,7 @@ function start(data){
 /* ---------- auto update ----------
    On launch and each time the app comes back to the screen, it checks GitHub for a newer
    index.html and reloads itself (never in the middle of a turn). No need to redo the bookmark. */
-const VERSION="v1.34";
+const VERSION="v1.35";
 let newVer=null;
 function calmToReload(){
   if(ROLE!=="host")return !(pn.tick&&pn.tick.me&&pn.tick.screen==="turn");
