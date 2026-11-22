@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<!-- Time's Up nocca · v1.39 -->
+<!-- Time's Up nocca · v1.40 -->
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1B2A8C">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -620,7 +620,7 @@ textarea.field{min-height:130px;padding:12px 14px;resize:vertical;line-height:1.
 
 <div id="app"></div>
 <div id="adm"></div>
-<div class="ver" id="ver" aria-hidden="true">v1.39</div>
+<div class="ver" id="ver" aria-hidden="true">v1.40</div>
 <div class="upd" id="upd" hidden>Mise à jour…</div>
 
 <script>
@@ -1167,10 +1167,72 @@ function vRules(){
    After each round, a recap lets the players fix any card before validating.
    All cards found make the deck of rounds 3 (one word) and 4 (mime): 60 s flat, one try per card.
    Score = cards found over the 4 rounds; tie-break = seconds left when a deck is finished early. */
-const DUO_START=60000,DUO_BONUS=3000,LB_KEY="tu-duo-ranked-v3";
+const DUO_START=60000,DUO_BONUS=3000;
 const DUO_KIND=[0,0,1,2],DUO_LABELS=["Décrire 1","Décrire 2","Un mot","Mime"];
 function duoDescribe(d){return DUO_KIND[d.round-1]===0}
-function lbRaw(){const v=store.get(LB_KEY);return Array.isArray(v)?v:[]}
+/* ---------- Duo ranking shared by all devices ----------
+   Stored as a list of finished games (every game, not only the best ones), plus:
+   - reset: time of the last "Effacer le classement" (older games are gone everywhere),
+   - gone: games removed with "Corriger la manche précédente".
+   Each device keeps a copy (works offline) and swaps it through the message server: one retained
+   message on LB_TOPIC. Two copies are merged by putting all their games together, so nothing is lost
+   whichever device was offline. The ranking (best game per duo) and the round records are computed from it. */
+const GAMES_KEY="tu-duo-games-v1",LB_TOPIC="tumaison/v2/lb/nocca-k7q3x9",LB_MAX=400;
+// Starting point (Noah's phone, 22 Nov 2026). The tablet's older local ranking is not taken over.
+const LB_SEED={reset:0,gone:[],games:[
+  {a:"Noah",b:"Nolan",score:61,parts:[20,20,12,9],spare:0,ts:1795300000003},
+  {a:"Vans",b:"Noah",score:46,parts:[13,15,10,8],spare:0,ts:1795300000002},
+  {a:"Maelia",b:"Noah",score:38,parts:[5,10,13,10],spare:0,ts:1795300000001}]};
+const lbInt=(v,max)=>Math.max(0,Math.min(max,Math.round(+v||0)));
+function lbCleanGame(g){
+  if(!g||typeof g!=="object"||typeof g.ts!=="number"||!isFinite(g.ts))return null;
+  const a=cleanStr(g.a,24),b=cleanStr(g.b,24);if(!a||!b)return null;
+  const parts=[0,1,2,3].map(i=>lbInt(Array.isArray(g.parts)?g.parts[i]:0,999));
+  return {a,b,score:parts.reduce((x,y)=>x+y,0),parts,spare:lbInt(g.spare,99999),ts:g.ts};
+}
+function lbPrune(doc){
+  if(doc.games.length<=LB_MAX)return doc;
+  const keep=new Set(lbClean(doc.games).map(g=>g.ts));
+  [0,1,2,3].forEach(i=>{let top=null;doc.games.forEach(g=>{if(!top||g.parts[i]>top.parts[i])top=g});if(top)keep.add(top.ts)});
+  doc.games.slice().sort((x,y)=>y.ts-x.ts).forEach(g=>{if(keep.size<LB_MAX)keep.add(g.ts)});
+  doc.games=doc.games.filter(g=>keep.has(g.ts));return doc;
+}
+function lbMerge(x,y){
+  const now=Date.now()+864e5,ok=r=>typeof r==="number"&&r<now?r:0;
+  const reset=Math.max(ok(x.reset),ok(y.reset));
+  const gone=new Set([].concat(x.gone||[],y.gone||[]).filter(t=>typeof t==="number"&&t>reset));
+  const by=new Map();
+  [].concat(x.games||[],y.games||[]).forEach(g=>{g=lbCleanGame(g);if(g&&g.ts>reset&&!gone.has(g.ts))by.set(g.ts,g)});
+  return lbPrune({reset,gone:[...gone].sort((p,q)=>q-p).slice(0,300),games:[...by.values()].sort((p,q)=>q.ts-p.ts)});
+}
+function lbSig(d){return d.reset+"|"+d.games.map(g=>g.ts).sort().join(",")+"|"+d.gone.slice().sort().join(",")}
+function lbDoc(){const v=store.get(GAMES_KEY);return v&&Array.isArray(v.games)?v:lbMerge(LB_SEED,{})}
+function lbSave(doc){store.set(GAMES_KEY,doc);lbPush()}
+function lbRaw(){return lbDoc().games}
+const lbNet={clients:[],started:false};
+function lbPush(){
+  const msg=JSON.stringify(Object.assign({k:"lb"},lbDoc()));
+  lbNet.clients.forEach(c=>{try{if(c.connected)c.publish(LB_TOPIC,msg,{qos:1,retain:true})}catch(e){}});
+}
+function lbIncoming(m){
+  if(!m||!Array.isArray(m.games))return;
+  const cur=lbDoc(),merged=lbMerge(cur,m);
+  if(lbSig(merged)!==lbSig(cur)){store.set(GAMES_KEY,merged);lbRefresh()}
+  if(lbSig(merged)!==lbSig(lbMerge(m,{})))lbPush(); // the server copy is missing something: send ours
+}
+function lbRefresh(){
+  if(!state||!["duoSetup","duoEnd"].includes(state.screen))return;
+  const el=document.activeElement;if(el&&/^(INPUT|TEXTAREA)$/.test(el.tagName))return;
+  render();
+}
+async function lbSyncStart(){
+  if(!ONLINE||ROLE!=="host"||lbNet.started)return;lbNet.started=true;
+  try{await loadScript(LIBS.mqtt)}catch(e){lbNet.started=false;setTimeout(lbSyncStart,30000);return}
+  const id="tulb"+Math.random().toString(36).slice(2,10);
+  RELAY_BROKERS.forEach((url,i)=>lbNet.clients.push(relayConnect(url,id+i,null,
+    c=>{c.subscribe(LB_TOPIC,{qos:1});c.lbGot=false;setTimeout(()=>{if(!c.lbGot)lbPush()},5000)}, // empty server: fill it
+    (c,m)=>{c.lbGot=true;lbIncoming(m)})));
+}
 // Same two people (any order, any case/accents) = same duo.
 function duoKey(a,b){const n=x=>String(x||"").trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");return [n(a),n(b)].sort().join("&")}
 function lbBetter(x,y){return x.score-y.score||(x.spare||0)-(y.spare||0)||y.ts-x.ts}
@@ -1184,17 +1246,15 @@ function lbFor(){return lbClean(lbRaw())}
 function lbAdd(e){
   const list=lbClean(lbRaw()),key=duoKey(e.a,e.b),old=list.find(x=>duoKey(x.a,x.b)===key);
   const res={prev:old?old.score:0,improved:!old||lbBetter(e,old)>0,ts:old?old.ts:e.ts};
-  if(res.improved){res.ts=e.ts;res.old=old||null;store.set(LB_KEY,list.filter(x=>x!==old).concat(e).sort((x,y)=>lbBetter(y,x)).slice(0,50))}
+  if(res.improved)res.ts=e.ts;
+  const doc=lbDoc();lbSave(lbMerge(doc,{games:[e]}));
   return res;
 }
-/* Round records on this device: best single describe round (Décrire 1 or 2), best "one word", best mime.
-   The first time, they are taken from the scores already in the ranking. */
-const REC_KEY="tu-duo-rec-v1";
+/* Round records (all devices): best single describe round (Décrire 1 or 2), best "one word", best mime. */
 function recGet(){
-  const r=store.get(REC_KEY);if(r&&typeof r.d==="number")return r;
   const v={d:0,w:0,m:0};
   lbRaw().forEach(e=>{const q=e.parts||[];v.d=Math.max(v.d,q[0]||0,q[1]||0);v.w=Math.max(v.w,q[2]||0);v.m=Math.max(v.m,q[3]||0)});
-  store.set(REC_KEY,v);return v;
+  return v;
 }
 const REC_OF=["d","d","w","m"];
 function duoNames(){const s=state.settings;return {a:(s.duoA||"").trim()||"Joueur 1",b:(s.duoB||"").trim()||"Joueur 2"}}
@@ -1241,7 +1301,7 @@ function vDuoSetup(){
     <h2>Classement</h2>
     ${lbList()}
     ${lbFor().length?(ui.confirmClear
-      ?`<div class="confirm-box"><p><b>Sûr ?</b> Tout le classement sera effacé.</p><div class="confirm-row"><button class="btn btn-tomato small" data-act="lbClear">Oui, effacer</button><button class="btn btn-ghost small" data-act="lbClearCancel">Annuler</button></div></div>`
+      ?`<div class="confirm-box"><p><b>Sûr ?</b> Tout le classement sera effacé, sur tous les appareils.</p><div class="confirm-row"><button class="btn btn-tomato small" data-act="lbClear">Oui, effacer</button><button class="btn btn-ghost small" data-act="lbClearCancel">Annuler</button></div></div>`
       :`<button class="link-btn" style="align-self:center" data-act="lbClearAsk">Effacer le classement</button>`):""}
   </section>
 </div>`;
@@ -1409,21 +1469,17 @@ function duoValidate(){
 /* Back to the recap of the round just validated (also from the final screen: the score is taken back out of the ranking). */
 function duoUndo(){
   const d=state.duo,u=d&&d.undo;if(!u||(state.screen!=="duoReady"&&state.screen!=="duoEnd"))return;
-  if(d.saved&&d.improved){store.set(LB_KEY,lbRaw().filter(e=>e.ts!==d.saved).concat(d.lbOld?[d.lbOld]:[]))}
-  if(d.saved&&d.recOld)store.set(REC_KEY,d.recOld);
-  d.recOld=null;d.recBeat=null;
-  Object.assign(d,{round:u.round,plays:u.plays,parts:u.parts,found:u.found,pos:u.pos,spare:u.spare,cleared:u.cleared,undo:null,saved:0,improved:false,prev:0,lbOld:null,paused:false});
+  if(d.gid){const doc=lbDoc();lbSave(lbMerge(doc,{games:[],gone:[d.gid]}))}
+  Object.assign(d,{round:u.round,plays:u.plays,parts:u.parts,found:u.found,pos:u.pos,spare:u.spare,cleared:u.cleared,undo:null,saved:0,gid:0,recBeat:null,improved:false,prev:0,paused:false});
   state.screen="duoRecap";window.scrollTo(0,0);render();
 }
 function duoFinish(){
   const d=state.duo,total=d.parts.reduce((x,y)=>x+y,0);
   if(total>0&&!d.saved){
-    const old=recGet(),nw={...old};
-    d.recOld=old;d.recBeat=d.parts.map((n,i)=>n>0&&n>old[REC_OF[i]]);
-    d.parts.forEach((n,i)=>{const k=REC_OF[i];nw[k]=Math.max(nw[k],n)});
-    store.set(REC_KEY,nw);
+    const old=recGet(),g={a:d.a,b:d.b,score:total,parts:d.parts.slice(),spare:Math.round(d.spare/1000),ts:Date.now()};
+    d.recBeat=d.parts.map((n,i)=>n>0&&n>old[REC_OF[i]]);
+    const r=lbAdd(g);d.gid=g.ts;d.saved=r.ts;d.improved=r.improved;d.prev=r.prev;
   }
-  if(total>0&&!d.saved){const r=lbAdd({a:d.a,b:d.b,score:total,parts:d.parts.slice(),spare:Math.round(d.spare/1000),ts:Date.now()});d.saved=r.ts;d.improved=r.improved;d.prev=r.prev;d.lbOld=r.old||null}
   state.screen="duoEnd";window.scrollTo(0,0);render();
 }
 setInterval(()=>{
@@ -1874,7 +1930,7 @@ function hostAct(act,el){
     case "duoQuit":ui.confirmQuit=false;state.duo=null;state.screen="duoSetup";render();break;
     case "lbClearAsk":ui.confirmClear=true;render();break;
     case "lbClearCancel":ui.confirmClear=false;render();break;
-    case "lbClear":store.set(LB_KEY,[]);store.set(REC_KEY,{d:0,w:0,m:0});ui.confirmClear=false;render();break;
+    case "lbClear":lbSave({reset:Math.max(Date.now(),...lbRaw().map(g=>g.ts)),gone:[],games:[]});ui.confirmClear=false;render();break;
     case "src":s.phones=el.dataset.v==="phones";render();break;
     case "toggleSettings":ui.settingsOpen=!ui.settingsOpen;render();break;
     case "toggleCustom":ui.customOpen=!ui.customOpen;render();break;
@@ -2363,7 +2419,7 @@ function start(data){
 /* ---------- auto update ----------
    On launch and each time the app comes back to the screen, it checks GitHub for a newer
    index.html and reloads itself (never in the middle of a turn). No need to redo the bookmark. */
-const VERSION="v1.39";
+const VERSION="v1.40";
 let newVer=null;
 function calmToReload(){
   if(ROLE!=="host")return !(pn.tick&&pn.tick.me&&pn.tick.screen==="turn");
@@ -2394,6 +2450,7 @@ if(ONLINE){
 }
 if(ROLE!=="host"&&ONLINE){phoneBoot()}
 else{
+  setTimeout(lbSyncStart,800);
   try{window.claude&&window.claude.hot&&window.claude.hot.snapshot&&window.claude.hot.snapshot(()=>({state}))}catch(e){}
   if(window.claude&&window.claude.hot&&window.claude.hot.ready)window.claude.hot.ready(start);
   else start(window.claude&&window.claude.hot&&window.claude.hot.data||{});
