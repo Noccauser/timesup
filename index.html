@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<!-- Time's Up nocca · v1.40 -->
+<!-- Time's Up nocca · v1.41 -->
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1B2A8C">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -178,6 +178,13 @@ svg{display:block}
 .lobby-side .opt>span{min-width:150px;font-size:.95rem}
 .lobby-side .seg button{min-height:42px;padding:0 15px}
 .lobby-side .legend-teams{flex-basis:100%}
+.legend-teams .team-btns{flex-basis:100%;display:flex;flex-wrap:wrap;gap:8px}
+.legend-teams .btn.small{min-height:40px;padding:6px 14px;font-size:.95rem}
+.team-sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.team-sum>div{border-radius:16px;padding:12px 14px;background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 3px var(--team)}
+.team-sum b{display:block;font-family:var(--display);font-size:1.3rem;color:var(--team);margin-bottom:4px}
+.team-sum ul{list-style:none;margin:0;padding:0;font-weight:700;font-size:1.1rem;line-height:1.5}
+.team-sum .empty{color:var(--muted);font-weight:400}
 /* Landscape tablet: the lobby fills the screen and only the player list scrolls */
 @media (orientation:landscape) and (min-width:720px){
   #app.lobbymode{height:100%;min-height:0}
@@ -476,6 +483,8 @@ textarea.field{min-height:130px;padding:12px 14px;resize:vertical;line-height:1.
 .pause-layer{position:absolute;inset:0;background:var(--bg);border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center;z-index:5;padding:20px}
 .pause-layer h2{font-family:var(--display);font-size:3.4rem;color:var(--paper)}
 .hint{color:var(--muted);font-size:.95rem}
+.late-note{max-width:560px;margin:0;padding:10px 14px;border-radius:14px;background:rgba(255,201,60,.14);color:var(--sun);font-weight:700;font-size:.92rem;line-height:1.35;text-align:center}
+.late-line{margin:0;color:var(--sun);font-weight:700;font-size:.85rem;opacity:.9;text-align:center}
 
 /* Turn recap */
 .recap{width:100%;max-width:560px;display:flex;flex-direction:column;gap:10px}
@@ -602,7 +611,7 @@ textarea.field{min-height:130px;padding:12px 14px;resize:vertical;line-height:1.
 .duo-action.k0{color:var(--sun)} .duo-action.k1{color:var(--mint)} .duo-action.k2{color:#FF8A7A}
 /* Phone: a slightly smaller disc and tighter gaps, so the undo link stays clear of the bottom edge and the version number */
 @media (max-width:699px){.duo-ready{gap:16px}.duo-ready .disc-wrap{width:min(80vw,38vh,400px)}}
-@media (max-width:699px) and (max-height:700px){.duo-ready{gap:10px}.duo-ready .disc-wrap{width:min(80vw,32vh,400px)}}
+@media (max-width:699px) and (max-height:700px){.duo-ready{gap:10px}.duo-ready .disc-wrap{width:min(80vw,29vh,400px)}}
 .duo-facts{margin:0;display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
 .duo-facts span{background:rgba(255,255,255,.1);border-radius:999px;padding:7px 14px;font-weight:700;font-size:.98rem}
 .duo-hud{justify-content:space-between}
@@ -620,7 +629,7 @@ textarea.field{min-height:130px;padding:12px 14px;resize:vertical;line-height:1.
 
 <div id="app"></div>
 <div id="adm"></div>
-<div class="ver" id="ver" aria-hidden="true">v1.40</div>
+<div class="ver" id="ver" aria-hidden="true">v1.41</div>
 <div class="upd" id="upd" hidden>Mise à jour…</div>
 
 <script>
@@ -695,8 +704,8 @@ hard:["Hitler","Staline","Mussolini","Kim Jong-un","Pol Pot","Ben Laden","Saddam
 };
 
 const ROUNDS=[
-  {title:"Décrivez !",label:"Décrire",rules:"Dites <b>tout ce que vous voulez</b>, sauf le mot lui-même (ni un bout, ni une traduction). Votre équipe peut faire <b>autant de propositions</b> qu'elle veut."},
-  {title:"Un seul mot !",label:"Un mot",rules:"Vous n'avez droit qu'à <b>un seul mot</b>. Votre équipe n'a qu'<b>une seule proposition</b> par carte."},
+  {title:"Décrivez !",label:"Décrire",rules:"Dites <b>tout ce que vous voulez</b>, sauf le mot lui-même (ni un bout, ni une traduction). Votre équipe peut faire <b>autant de propositions</b> qu'elle veut. <b>Interdit de montrer du doigt</b> quelqu'un ou un objet : sinon, le point peut être refusé."},
+  {title:"Un seul mot !",label:"Un mot",rules:"Vous n'avez droit qu'à <b>un seul mot</b>. Votre équipe n'a qu'<b>une seule proposition</b> par carte. <b>Interdit de montrer du doigt</b> quelqu'un ou un objet : sinon, le point peut être refusé."},
   {title:"Mimez !",label:"Mime",rules:"<b>Mimez</b> la carte. Fredonner et faire des bruitages, c'est permis. <b>Parler, c'est interdit.</b> Une seule proposition par carte."}
 ];
 
@@ -839,12 +848,7 @@ function vSetup(){
   <h1 class="setup-title">Préparer la partie</h1>
   <section class="panel">
     <h2>Équipes</h2>
-    <div class="teams">${s.teams.map((t,i)=>`<div class="team-row">
-      <button class="dot" style="--team:${t.color}" data-act="color" data-i="${i}" aria-label="Changer la couleur de l'équipe ${i+1}"></button>
-      <input id="team-${i}" class="field" data-team="${i}" value="${esc(t.name)}" maxlength="24" aria-label="Nom de l'équipe ${i+1}" autocomplete="off">
-      ${s.teams.length>2?`<button class="icon-btn" data-act="delTeam" data-i="${i}" aria-label="Supprimer l'équipe ${i+1}">✕</button>`:"<span></span>"}
-    </div>`).join("")}</div>
-    ${s.teams.length<6?`<button class="btn btn-ghost small" data-act="addTeam">+ Ajouter une équipe</button>`:""}
+    ${teamRows()}
   </section>
   ${ONLINE?`<section class="panel">
     <h2>Les cartes</h2>
@@ -935,13 +939,55 @@ function vLobby(){
       <div class="opt"><span>Cartes à choisir</span><div class="seg">${[5,8,10].map(k=>seg("per",k,L.per===k,k)).join("")}</div></div>
       <div class="opt"><span>Cartes perso à écrire</span><div class="seg">${[0,1,2,3].map(k=>seg("customs",k,L.customs===k,k?k:"Aucune")).join("")}</div></div>
       <div class="opt"><span>Cartes affichées sur</span><div class="seg">${seg("giverMode",0,!L.giverPhones,"La tablette")}${seg("giverMode",1,!!L.giverPhones,"Les téléphones")}</div>
-        ${ps.length?`<div class="legend-teams">${lobbyTeams().map(t=>`<span><i style="--team:${t.color}"></i>${esc(t.name)}</span>`).join("")}<span class="hint">Touche la pastille d'un joueur pour changer son équipe</span>${L.giverPhones&&emptyLobbyTeams().length?`<span class="who warn" style="flex-basis:100%;font-size:.9rem">${emptyLobbyTeams().map(esc).join(", ")} : aucun joueur, ses tours se joueront sur la tablette.</span>`:""}</div>`:""}</div>
+        ${`<div class="legend-teams">${lobbyTeams().map(t=>`<span><i style="--team:${t.color}"></i>${esc(t.name)}</span>`).join("")}<span class="team-btns"><button class="btn btn-ghost small" data-act="teamsEdit">Modifier les équipes</button>${ps.length>=2?`<button class="btn btn-ghost small" data-act="teamsRandAsk">Équipes au hasard</button>`:""}</span>${ps.length?`<span class="hint">Touche la pastille d'un joueur pour changer son équipe</span>`:""}${L.giverPhones&&emptyLobbyTeams().length?`<span class="who warn" style="flex-basis:100%;font-size:.9rem">${emptyLobbyTeams().map(esc).join(", ")} : aucun joueur, ses tours se joueront sur la tablette.</span>`:""}</div>`}</div>
       <button class="btn btn-sun wide" data-act="lobbyStart" ${n<5?"disabled":""}>Lancer la partie · ${plural(n,"carte")}</button>
       <p class="hint">${ready}/${ps.length} prêt${ready>1?"s":""}${n<5?" · il faut au moins 5 cartes":""} · touche la couronne d'un joueur pour le faire admin (il pilote la tablette depuis son téléphone)</p>
       <ul class="players">${ps.length?ps.map(([pid,p])=>{const tm=lobbyTeams()[p.team||0]||lobbyTeams()[0];return `<li class="${p.ready?"ready":""}"><span class="pdot ${p.online?"on":""}"></span><b>${esc(p.name||"…")}</b><button class="crown-btn ${state.admin===pid?"on":""}" data-act="setAdmin" data-pid="${esc(pid)}" aria-label="${state.admin===pid?"Retirer l'admin à ":"Donner l'admin à "}${esc(p.name)}">${ICON.crown}</button><button class="lock-btn ${p.locked?"on":""}" data-act="lock" data-pid="${esc(pid)}" aria-label="${p.locked?"Déverrouiller":"Verrouiller"} le nom et l'équipe de ${esc(p.name)}">${p.locked?ICON.lock:ICON.unlock}</button><button class="tdot" style="--team:${tm.color}" data-act="pteam" data-pid="${esc(pid)}" aria-label="${esc(p.name)} joue avec ${esc(tm.name)}, toucher pour changer"></button><span class="st">${p.ready?"✓":Math.min(p.n,L.per)+"/"+L.per}</span><button class="kick" data-act="kick" data-pid="${esc(pid)}" aria-label="Retirer ${esc(p.name)}">✕</button></li>`}).join(""):`<li class="empty">Personne pour l'instant</li>`}</ul>
     </div>
   </div>`;
 }
+function teamRows(){
+  const s=state.settings;
+  return `<div class="teams">${s.teams.map((t,i)=>`<div class="team-row">
+      <button class="dot" style="--team:${t.color}" data-act="color" data-i="${i}" aria-label="Changer la couleur de l'équipe ${i+1}"></button>
+      <input id="team-${i}" class="field" data-team="${i}" value="${esc(t.name)}" maxlength="24" aria-label="Nom de l'équipe ${i+1}" autocomplete="off">
+      ${s.teams.length>2?`<button class="icon-btn" data-act="delTeam" data-i="${i}" aria-label="Supprimer l'équipe ${i+1}">✕</button>`:"<span></span>"}
+    </div>`).join("")}</div>
+    ${s.teams.length<6?`<button class="btn btn-ghost small" data-act="addTeam">+ Ajouter une équipe</button>`:""}`;
+}
+/* Lobby: edit the teams, or deal the connected players into random teams. */
+function vTeamsSheet(){
+  const ps=Object.entries(state.lobby.players),T=lobbyTeams();
+  if(ui.teams==="edit")return `<div class="overlay" data-act="teamsClose"><div class="sheet" data-stop>
+    <h2>Les équipes</h2>
+    ${teamRows()}
+    ${ps.length?`<p class="hint">Les joueurs d'une équipe supprimée vont dans l'équipe la moins remplie.</p>`:""}
+    <button class="btn btn-sun" data-act="teamsClose">OK</button>
+  </div></div>`;
+  if(ui.teams==="rand"){
+    const max=Math.min(6,ps.length),cur=Math.min(max,ui.randN||T.length);
+    return `<div class="overlay" data-act="teamsClose"><div class="sheet" data-stop style="text-align:center;align-items:center">
+    <h2>Équipes au hasard</h2>
+    <p>On mélange les ${ps.length} joueurs connectés dans des équipes au hasard.</p>
+    <div class="opt" style="align-items:center"><span>Nombre d'équipes</span><div class="seg">${Array.from({length:max-1},(_,i)=>i+2).map(k=>seg("randN",k,cur===k,k)).join("")}</div></div>
+    <div class="confirm-row"><button class="btn btn-sun" data-act="teamsRand">Mélanger</button><button class="btn btn-ghost" data-act="teamsClose">Annuler</button></div>
+  </div></div>`;
+  }
+  return `<div class="overlay" data-act="teamsClose"><div class="sheet" data-stop style="text-align:center">
+    <h2>Voici les équipes</h2>
+    <div class="team-sum">${T.map((t,i)=>{const names=ps.filter(([,p])=>(p.team||0)===i).map(([,p])=>p.name||"…");
+      return `<div style="--team:${t.color}"><b>${esc(t.name)}</b><ul>${names.length?names.map(n=>`<li>${esc(n)}</li>`).join(""):`<li class="empty">Personne</li>`}</ul></div>`}).join("")}</div>
+    <p class="hint">Placez-vous avec votre équipe !</p>
+    <div class="confirm-row"><button class="btn btn-sun" data-act="teamsClose">OK</button><button class="btn btn-ghost" data-act="teamsRand">Remélanger</button></div>
+  </div></div>`;
+}
+function dealTeams(n){
+  const s=state.settings;
+  while(s.teams.length<n){const used=s.teams.map(t=>t.color),d=TEAM_DEFS.find(x=>!used.includes(x[1]))||TEAM_DEFS[0];s.teams.push({name:d[0],color:d[1]})}
+  while(s.teams.length>n)s.teams.pop();
+  shuffle(Object.keys(state.lobby.players)).forEach((pid,i)=>{state.lobby.players[pid].team=i%n});
+}
+function lobbyTeamsChanged(){if(state.screen!=="lobby"||!state.lobby)return;broadcast(hostConfig());broadcastTick()}
 function vPhonesSheet(){
   return `<div class="overlay" data-act="closePhones"><div class="sheet" data-stop style="align-items:center;text-align:center">
     <h2>Rejoindre la partie</h2>
@@ -1004,6 +1050,7 @@ function vReady(){
       ${tabletReaderLine()}
       ${g?whoLine()+tabletFallback("go"):""}
       ${liveScores(teamTotals(),lastTurnInfo())}
+      ${lateLine(state.lastTurn&&state.lastTurn.late)}
       <p class="meta-line">${plural(state.pile.length,"carte")} restante${state.pile.length>1?"s":""} dans la manche</p>
       ${undoLink()}
     </div>
@@ -1102,17 +1149,23 @@ function vTurnEnd(){
     ${t.rows.length?`<div class="recap">${t.rows.map((r,i)=>{
       const cls=r.ok?"is-ok":(r.last?"is-last":"is-no");
       return `<button class="tr ${cls}" data-act="toggleRow" data-i="${i}"><span>${esc(state.deck[r.i].w)}</span><i>${r.ok||r.last?ICON.ok:ICON.no}</i></button>`;
-    }).join("")}</div><p class="hint">Touche une carte pour corriger. La carte en pointillé était à l'écran quand le chrono a sonné.</p>`:`<p class="hint">Aucune carte ce tour-ci.</p>`}
+    }).join("")}</div><p class="hint">Touche une carte pour corriger. La carte en pointillé était à l'écran quand le chrono a sonné.</p>${lateNote(t.rows)}`:`<p class="hint">Aucune carte ce tour-ci.</p>`}
     <button class="btn btn-sun wide" style="max-width:560px" data-act="confirmTurn">Valider</button>
   </div>`;
 }
 
+/* The card on screen at the buzzer does not count (official rule). If it is counted anyway, say so. */
+function lateNote(rows){
+  return rows.some(r=>r.last&&r.ok)?`<p class="late-note">Règle officielle : la carte à l'écran quand le chrono sonne ne compte pas. À compter seulement si la tablette a bugué.</p>`:"";
+}
+function lateLine(on){return on?`<p class="late-line">Le dernier mot du tour précédent a été compté après le chrono.</p>`:""}
 function vRoundEnd(){
   const r=state.round;
   return `${topbar("Fin de la manche "+r)}
   <div class="center-col">
     <div class="titles"><h1 class="mega">Manche ${r}</h1><p class="mega-sub">Fin de manche</p></div>
     ${board()}
+    ${lateLine(state.lastTurn&&state.lastTurn.late&&state.undo)}
     <button class="btn btn-sun wide" style="max-width:560px" data-act="nextRound">${r<3?"Manche suivante":"Résultat final"}</button>
     ${undoLink()}
   </div>`;
@@ -1152,12 +1205,12 @@ function vRules(){
       <li>Les mêmes cartes servent pendant les 3 manches : retenez-les bien.</li>
       <li>Une manche se termine quand toutes les cartes sont trouvées.</li>
       <li>✓ = carte trouvée, 1 point. ✗ = on passe, la carte retourne dans la pioche.</li>
-      <li>Quand le chrono sonne, la carte en cours ne compte pas.</li>
+      <li>Quand le chrono sonne, la carte en cours ne compte pas, même si elle a été trouvée juste avant : il fallait appuyer à temps.</li>
     </ul>
     ${ROUNDS.map((R,i)=>`<h3>Manche ${i+1} · ${R.title}</h3><p>${R.rules}</p>`).join("")}
     <p>Après 3 manches, l'équipe avec le plus de points gagne.</p>
     <h3>Mode duo</h3>
-    <p>À deux, en 4 manches. <b>Manches 1 et 2</b> : chacun décrit à son tour, 60 s, +3 s par carte trouvée, sans limite de cartes, passer est gratuit. Toutes les cartes trouvées forment le paquet des manches suivantes. <b>Manche 3</b> : le premier fait deviner en un seul mot. <b>Manche 4</b> : le second mime. En manches 3 et 4 : 60 s, un seul essai par carte. Score = toutes les cartes trouvées. À égalité, le duo qui a fini ses cartes le plus vite passe devant. Après chaque manche, on vérifie les cartes et on peut corriger avant de valider.</p>
+    <p>À deux, en 4 manches. <b>Manches 1 et 2</b> : chacun décrit à son tour, 60 s, +3 s par carte trouvée, sans limite de cartes, passer est gratuit. Toutes les cartes trouvées forment le paquet des manches suivantes. <b>Manche 3</b> : le premier fait deviner en un seul mot. <b>Manche 4</b> : le second mime. En manches 1, 2 et 3 : interdit de montrer du doigt quelqu'un ou un objet. En manches 3 et 4 : 60 s, un seul essai par carte. Score = toutes les cartes trouvées. À égalité, le duo qui a fini ses cartes le plus vite passe devant. Après chaque manche, on vérifie les cartes et on peut corriger avant de valider.</p>
     <button class="btn btn-sun" data-act="closeRules">Compris</button>
   </div></div>`;
 }
@@ -1318,8 +1371,8 @@ function duoUndoLink(){
 function vDuoReady(){
   const d=state.duo,k=DUO_KIND[d.round-1],R=ROUNDS[k],n=d.deck.length,g=duoGiver(d),o=duoGuesser(d);
   const total=d.parts.reduce((x,y)=>x+y,0);
-  const facts=k===0?["60 secondes","+3 s par carte trouvée","Passer est gratuit"]
-    :k===1?[plural(n,"carte")+" à refaire","60 secondes","Un seul essai par carte"]
+  const facts=k===0?["60 secondes","+3 s par carte trouvée","Passer est gratuit","Sans pointer du doigt"]
+    :k===1?[plural(n,"carte")+" à refaire","60 secondes","Un seul essai par carte","Sans pointer du doigt"]
     :[plural(n,"carte")+" à refaire","60 secondes","Sans parler"];
   return `<div class="topbar"><span class="t-label duo-top">${duoDots(d)}<span>Manche ${d.round}/4${d.round>1?` · ${plural(total,"point")}`:""}</span></span><button class="icon-btn" data-act="duoPause">Pause</button></div>
   <div class="center-col duo-ready">
@@ -1327,6 +1380,7 @@ function vDuoReady(){
     <div class="titles"><h1 class="mega duo-action k${k}">${R.title}</h1><p class="duo-who">${esc(g)} fait deviner à ${esc(o)}</p></div>
     <p class="duo-facts">${facts.map(f=>`<span>${f}</span>`).join("")}</p>
     <div class="disc-wrap"><button class="disc" style="--team:var(--sun)" data-act="duoGo" aria-label="Lancer le chrono"><strong>Prêts ?</strong><span class="go-pill">Go !</span></button></div>
+    ${lateLine(d.round>1&&d.late).replace("du tour précédent","de la manche précédente")}
     ${duoUndoLink()}
   </div>
   ${d.paused?duoPauseLayer():""}`;
@@ -1380,6 +1434,7 @@ function vDuoEnd(){
     <div class="duo-final"><span class="duo-big">${total}</span><span>point${total>1?"s":""} pour ${esc(d.a)} &amp; ${esc(d.b)}</span></div>
     <div class="duo-parts">${DUO_LABELS.map((L,i)=>{const nr=d.recBeat&&d.recBeat[i];return `<span class="${nr?"rec":""}">${nr?`<em class="rec-tag">Record !</em>`:""}<small>${L}</small><b>${d.parts[i]}</b></span>`}).join("")}</div>
     ${(()=>{const r=recGet();return r.d||r.w||r.m?`<p class="duo-recs">Records : Décrire ${r.d} · Un mot ${r.w} · Mime ${r.m}</p>`:""})()}
+    ${lateLine(d.late).replace("du tour précédent","de la dernière manche")}
     ${msg?`<div><p class="duo-msg ${top?"gold":""}">${msg}</p>${sub?`<p class="duo-sub">${sub}</p>`:""}</div>`:""}
     <div class="end-actions">
       <button class="btn btn-sun" data-act="duoStart">Rejouer</button>
@@ -1446,7 +1501,7 @@ function vDuoRecap(){
     <h1 class="mega" style="font-size:clamp(2.6rem,10vw,4.4rem)">${d.cleared?"Plus de cartes !":"Temps écoulé !"}</h1>
     <p class="recap-head"><b>+${plural(pts,"point")}</b> pour ${esc(d.a)} &amp; ${esc(d.b)}</p>
     ${d.plays.length?`<div class="recap">${d.plays.map((r,i)=>`<button class="tr ${r.ok?"is-ok":(r.last?"is-last":"is-no")}" data-act="duoToggle" data-i="${i}"><span>${esc(r.w)}</span><i>${r.ok||r.last?ICON.ok:ICON.no}</i></button>`).join("")}</div>
-    <p class="hint">Touche une carte pour corriger. La carte en pointillé était à l'écran quand le chrono a sonné.</p>`:`<p class="hint">Aucune carte cette manche.</p>`}
+    <p class="hint">Touche une carte pour corriger. La carte en pointillé était à l'écran quand le chrono a sonné.</p>${lateNote(d.plays)}`:`<p class="hint">Aucune carte cette manche.</p>`}
     <button class="btn btn-sun wide" style="max-width:560px" data-act="duoValidate">Valider</button>
   </div>`;
 }
@@ -1455,7 +1510,7 @@ function duoValidate(){
   const ok=d.plays.filter(p=>p.ok);
   // Kept until the next chrono starts, so a validated round can still be corrected.
   d.undo={round:d.round,plays:d.plays.map(p=>({...p})),parts:d.parts.slice(),found:d.found.slice(),pos:d.pos,spare:d.spare,cleared:d.cleared};
-  d.parts[d.round-1]=ok.length;
+  d.parts[d.round-1]=ok.length;d.late=ok.some(p=>p.last);
   if(duoDescribe(d))d.found=d.found.concat(ok.map(p=>({w:p.w,c:p.c})));
   d.plays=[];
   if(d.round===4||(d.round===2&&!d.found.length)||(d.round===1&&d.pos>=d.deck.length)){duoFinish();return}
@@ -1499,7 +1554,9 @@ function render(){
   ui.homeIntro=s==="home"&&ui.lastScreen!=="home";ui.lastScreen=s;
   app.className=(s==="turn"||s==="duoTurn")?"fill":(s==="lobby"?"scroll lobbymode":"scroll");
   const v={home:vHome,duoSetup:vDuoSetup,duoReady:vDuoReady,duoTurn:vDuoTurn,duoRecap:vDuoRecap,duoEnd:vDuoEnd,setup:vSetup,lobby:vLobby,roundIntro:vRoundIntro,ready:vReady,turn:vTurn,turnEnd:vTurnEnd,roundEnd:vRoundEnd,gameEnd:vGameEnd}[s]||vSetup;
-  app.innerHTML=v()+(ui.menu?vMenu():"")+(ui.rules?vRules():"")+(ui.phones?vPhonesSheet():"");
+  const fe=document.activeElement,fid=fe&&fe.id&&/^(INPUT|TEXTAREA)$/.test(fe.tagName)?fe.id:null,sel=fid?[fe.selectionStart,fe.selectionEnd]:null;
+  app.innerHTML=v()+(ui.menu?vMenu():"")+(ui.rules?vRules():"")+(ui.phones?vPhonesSheet():"")+(ui.teams&&s==="lobby"&&state.lobby?vTeamsSheet():"");
+  if(fid){const n=document.getElementById(fid);if(n){n.focus({preventScroll:true});try{n.setSelectionRange(sel[0],sel[1])}catch(e){}}}
   updateTimer();
   fitLock();
   save();
@@ -1852,7 +1909,7 @@ function confirmTurn(){
     else if(!state.pile.includes(r.i))state.pile.push(r.i);
   });
   state.scores[state.teamIdx][state.round-1]+=pts;
-  state.lastTurn={team:state.teamIdx,pts};
+  state.lastTurn={team:state.teamIdx,pts,late:t.rows.some(r=>r.last&&r.ok)};
   if(state.giverIdx&&(state.teams[state.teamIdx].players||[]).length)state.giverIdx[state.teamIdx]=(state.giverIdx[state.teamIdx]||0)+1;
   state.pile=shuffle(state.pile);
   state.teamIdx=(state.teamIdx+1)%state.teams.length;
@@ -1900,16 +1957,29 @@ function hostAct(act,el){
     case "addTeam":{
       const usedC=s.teams.map(t=>t.color),d=TEAM_DEFS.find(x=>!usedC.includes(x[1]))||TEAM_DEFS[0];
       s.teams.push({name:d[0],color:d[1]});
-      render();break;
+      render();lobbyTeamsChanged();break;
     }
-    case "delTeam":s.teams.splice(+el.dataset.i,1);render();break;
+    case "delTeam":{
+      const i=+el.dataset.i;if(s.teams.length<=2)break;s.teams.splice(i,1);
+      if(state.screen==="lobby"&&state.lobby){
+        const P=Object.values(state.lobby.players);
+        P.forEach(p=>{if((p.team||0)===i)p.team=-1;else if((p.team||0)>i)p.team--});
+        P.forEach(p=>{if(p.team===-1)p.team=emptiestTeam()});
+      }
+      render();lobbyTeamsChanged();break;
+    }
+    case "teamsEdit":ui.teams="edit";render();break;
+    case "teamsRandAsk":ui.teams="rand";ui.randN=Math.min(6,Math.max(2,state.settings.teams.length));render();break;
+    case "randN":ui.randN=+el.dataset.v;render();break;
+    case "teamsRand":{const n=Math.max(2,Math.min(6,ui.randN||s.teams.length,Object.keys(state.lobby.players).length));dealTeams(n);ui.teams="show";render();lobbyTeamsChanged();break}
+    case "teamsClose":ui.teams=null;render();lobbyTeamsChanged();break;
     case "color":{
       const i=+el.dataset.i,usedC=s.teams.filter((_,j)=>j!==i).map(t=>t.color);
       let k=COLORS.indexOf(s.teams[i].color);
       for(let n=0;n<COLORS.length;n++){k=(k+1)%COLORS.length;if(!usedC.includes(COLORS[k]))break}
       // A default name follows the colour ("Équipe rouge" → "Équipe jaune"); a custom name is kept.
       if(isAutoName(s.teams[i].name))s.teams[i].name=colorName(COLORS[k]);
-      s.teams[i].color=COLORS[k];render();break;
+      s.teams[i].color=COLORS[k];render();lobbyTeamsChanged();break;
     }
     case "toSetup":state.screen="setup";window.scrollTo(0,0);render();break;
     case "toHome":state.screen="home";ui.err="";window.scrollTo(0,0);render();break;
@@ -1941,8 +2011,8 @@ function hostAct(act,el){
     case "per":state.lobby.per=s.lobbyPer=+el.dataset.v;render();broadcast(hostConfig());break;
     case "customs":state.lobby.customs=s.lobbyCustoms=+el.dataset.v;render();broadcast(hostConfig());break;
     case "kick":delete state.lobby.players[el.dataset.pid];render();broadcast(hostConfig());break;
-    case "lobbyBack":state.screen="setup";render();break;
-    case "lobbyStart":{const d=lobbyDeck();if(d.length>=5)startGame(shuffle(d));break}
+    case "lobbyBack":ui.teams=null;state.screen="setup";render();break;
+    case "lobbyStart":{ui.teams=null;const d=lobbyDeck();if(d.length>=5)startGame(shuffle(d));break}
     case "phones":ui.menu=false;ui.phones=true;hostStart();render();break;
     case "closePhones":ui.phones=false;render();break;
     case "go":if(!giverOf())startTurn();break;
@@ -1974,7 +2044,7 @@ function hostAct(act,el){
 }
 document.addEventListener("input",e=>{
   const el=e.target,s=state.settings;
-  if(el.dataset&&el.dataset.team!=null){s.teams[+el.dataset.team].name=el.value;save()}
+  if(el.dataset&&el.dataset.team!=null){s.teams[+el.dataset.team].name=el.value;save();clearTimeout(ui.teamT);ui.teamT=setTimeout(lobbyTeamsChanged,500)}
   else if(el.id==="duo-a"){s.duoA=el.value;save()}
   else if(el.id==="duo-b"){s.duoB=el.value;save()}
   else if(el.id==="custom"){s.custom=el.value;const a=document.getElementById("avail");if(a)a.textContent=availText();const m=document.getElementById("sum");if(m)m.textContent=settingsSummary();save()}
@@ -2143,7 +2213,7 @@ function vGiver(){
     return `<div class="phone"><div class="phone-main">
       <h1>${esc(t.title||"Fin du tour")}</h1>
       <p class="recap-head"><b>+${plural(pts,"point")}</b> pour ${esc(t.team)}</p>
-      ${t.rows.length?`<div class="recap">${t.rows.map((r,i)=>`<button class="tr ${r.ok?"is-ok":(r.last?"is-last":"is-no")}" data-act="gToggle" data-i="${i}"><span>${esc(r.w)}</span><i>${r.ok||r.last?ICON.ok:ICON.no}</i></button>`).join("")}</div>
+      ${t.rows.length?`<div class="recap">${t.rows.map((r,i)=>`<button class="tr ${r.ok?"is-ok":(r.last?"is-last":"is-no")}" data-act="gToggle" data-i="${i}"><span>${esc(r.w)}</span><i>${r.ok||r.last?ICON.ok:ICON.no}</i></button>`).join("")}</div>${lateNote(t.rows)}
       <p class="hint">Touche une carte pour corriger. Les cartes non trouvées ne sont visibles que sur ton téléphone.</p>`:`<p class="lead">Aucune carte ce tour-ci.</p>`}
       <button class="btn btn-sun wide" data-act="gConfirm">Valider</button>
     </div></div>`;
@@ -2213,7 +2283,7 @@ function vAdminPanel(a){
       :aBtn("pause","Pause","btn-sun");
     if(s==="turnEnd"&&a.recapBy!=null)body+=`<p class="lead"><b>+${plural(a.pts||0,"point")}</b> · ${esc(a.recapBy)} vérifie les cartes sur son téléphone.</p>`
       +(a.giverOnline?"":aConfirm("recap","recapTablet","Vérifier les cartes sur la tablette","Les cartes vont s'afficher sur la tablette, tout le monde pourra les voir."));
-    if(s==="turnEnd"&&a.rows)body+=`<div class="recap">${a.rows.map((r,i)=>`<button class="tr ${r.ok?"is-ok":(r.last?"is-last":"is-no")}" data-act="adm" data-a="toggleRow" data-i="${i}"><span>${esc(r.w)}</span><i>${r.ok||r.last?ICON.ok:ICON.no}</i></button>`).join("")||`<p class="lead">Aucune carte ce tour-ci.</p>`}</div>
+    if(s==="turnEnd"&&a.rows)body+=`<div class="recap">${a.rows.map((r,i)=>`<button class="tr ${r.ok?"is-ok":(r.last?"is-last":"is-no")}" data-act="adm" data-a="toggleRow" data-i="${i}"><span>${esc(r.w)}</span><i>${r.ok||r.last?ICON.ok:ICON.no}</i></button>`).join("")||`<p class="lead">Aucune carte ce tour-ci.</p>`}</div>${lateNote(a.rows)}
       <p class="hint">Touche une carte pour corriger.</p>`+aBtn("confirmTurn",`Valider · +${plural(a.rows.filter(r=>r.ok).length,"point")}`,"btn-sun");
     if(s==="roundEnd")body+=aBtn("nextRound",a.round<3?"Manche suivante":"Résultat final","btn-sun");
     if((s==="ready"||s==="roundEnd")&&a.undo)body+=`<button class="undo-btn" data-act="adm" data-a="undoTurn">${ICON.undo}<span>Corriger le tour précédent <small>${esc(a.undo.team)} · +${a.undo.pts}</small></span></button>`;
@@ -2419,7 +2489,7 @@ function start(data){
 /* ---------- auto update ----------
    On launch and each time the app comes back to the screen, it checks GitHub for a newer
    index.html and reloads itself (never in the middle of a turn). No need to redo the bookmark. */
-const VERSION="v1.40";
+const VERSION="v1.41";
 let newVer=null;
 function calmToReload(){
   if(ROLE!=="host")return !(pn.tick&&pn.tick.me&&pn.tick.screen==="turn");
